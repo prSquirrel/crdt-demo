@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>EasyRTC - Server Root</title>
+
+    <script type="text/javascript" src="/js/client.js"></script>
+  </head>
+  <body onload="Client.connect();">
+    <h1>Hello EasyRTC</h1>
+
+    <p>
+      This is the easiest location to put your own static html files for developing WebRTC
+      applications.
+    </p>
+
+    <button type="button" onclick="Client.broadcastToConnectedPeers();">Broadcast</button>
+  </body>
+</html>
