@@ -1,130 +1,84 @@
 /* eslint-disable no-use-before-define */
-import easyrtc from 'easyrtc/api/easyrtc';
+
 import io from 'socket.io-client';
+// import Peer from 'simple-peer';
+import SimpleSignalClient from 'simple-signal-client';
+import EventEmitter from 'nanobus';
 
-let selfRtcId = '';
-const peerConnections = {};
+export default class Client extends EventEmitter {
+  constructor() {
+    super();
 
-export function connect() {
-  easyrtc.enableDebug(false);
-  easyrtc.enableDataChannels(true);
-  easyrtc.enableVideo(false);
-  easyrtc.enableAudio(false);
-  easyrtc.enableVideoReceive(false);
-  easyrtc.enableAudioReceive(false);
+    this.socket = io.connect(
+      'https://localhost:8443',
+      { 'connect timeout': 10000, 'force new connection': true }
+    );
 
-  easyrtc.setDataChannelOpenListener(onDataChannelOpen);
-  easyrtc.setDataChannelCloseListener(onDataChannelClose);
-
-  easyrtc.setPeerListener(onMessageReceived);
-  easyrtc.setRoomOccupantListener(onRoomOccupancyChange);
-
-  const socket = io.connect(
-    null,
-    { 'connect timeout': 10000, 'force new connection': true }
-  );
-
-  if (!socket) {
-    throw new Error('io.connect failed');
-  } else {
-    console.debug('allocated socket ', socket);
-    easyrtc.useThisSocketConnection(socket);
-  }
-
-  easyrtc.connect(
-    'easyrtc.reconnect',
-    onRtcConnectSuccess,
-    onRtcConnectFailure
-  );
-}
-
-function onDataChannelOpen(peerId) {
-  peerConnections[peerId] = true;
-  console.debug(`Data channel opened to ${peerId}`);
-  console.debug(`Other peers: ${JSON.stringify(connectedPeerIds())}`);
-}
-
-function onDataChannelClose(peerId) {
-  peerConnections[peerId] = false;
-  console.debug(`Data channel close to ${peerId}`);
-  console.debug(`Other peers: ${JSON.stringify(connectedPeerIds())}`);
-}
-
-function onMessageReceived(senderId, type, payload) {
-  console.debug(`senderId=${senderId} type=${type} payload=${payload}`);
-}
-
-//TODO: implement two different listening modes
-function onRoomOccupancyChange(roomName, otherPeers) {
-  // Unregister so that current peer initiates connections only once.
-  unregisterRoomOccupancyListener();
-
-  const otherPeerIds = Object.values(otherPeers).map(peer => peer.easyrtcid);
-
-  otherPeerIds.forEach(peerId => {
-    openDataChannelIfNotOpened(peerId);
-  });
-}
-
-function unregisterRoomOccupancyListener() {
-  easyrtc.setRoomOccupantListener(null);
-}
-
-function openDataChannelIfNotOpened(peerId) {
-  if (easyrtc.getConnectStatus(peerId) === easyrtc.NOT_CONNECTED) {
-    try {
-      console.debug(`Opening data channel to ${peerId}`);
-      openDataChannel(peerId);
-    } catch (error) {
-      console.log(`Failed to open data channel ${error}`);
+    if (!this.socket) {
+      throw new Error('io.connect failed');
+    } else {
+      console.debug('allocated socket ', this.socket);
     }
-  } else {
-    console.debug(`Already connected to ${peerId}`);
+
+    this.signalClient = new SimpleSignalClient(this.socket); // Uses an existing socket.io-client instance
+
+    const registerPeerHandlers = peer => {
+      peer.on('data', data => {
+        this.emit('data', data);
+      });
+      peer.on('close', () => {
+        this.emit('close');
+      });
+      peer.on('error', err => {
+        this.emit('error', err);
+      });
+    };
+
+    this.signalClient.on('discover', async allIds => {
+      console.debug(`All ids: ${JSON.stringify(allIds)}`);
+
+      const peerOptions = {};
+      const connections = allIds
+        .filter(id => id !== this.id())
+        .map(id =>
+          this.signalClient
+            .connect(
+              id,
+              {},
+              peerOptions
+            )
+            .then(({ peer, metadata }) => {
+              registerPeerHandlers(peer);
+            })
+        );
+      return Promise.all(connections); // (initiator side)
+    });
+
+    this.signalClient.on('request', async request => {
+      const { peer } = await request.accept(); // Accept the incoming request
+      console.log(`Accepted ${JSON.stringify(peer)}`);
+      registerPeerHandlers(peer);
+      return peer; // this is a fully-signaled simple-peer object (non-initiator side)
+    });
   }
-}
 
-function openDataChannel(peerId) {
-  const onCallSuccess = (caller, mediaType) => {
-    console.log(`${caller} -> ${mediaType}`);
-    // if (mediaType === 'datachannel') {}
-  };
-  const onCallFailed = (errorCode, errorMsg) => {
-    easyrtc.showError(errorCode, errorMsg);
-  };
-  const onCallAccepted = wasAccepted => {
-    console.debug(`Was accepted ${peerId} -> ${wasAccepted}`);
-  };
-
-  easyrtc.call(peerId, onCallSuccess, onCallFailed, onCallAccepted);
-}
-
-function onRtcConnectSuccess(id) {
-  selfRtcId = id;
-  console.debug('I am ', id);
-}
-
-function onRtcConnectFailure(errorCode, msg) {
-  easyrtc.showError(errorCode, msg);
-}
-
-export function broadcastToConnectedPeers() {
-  broadcastToPeers(connectedPeerIds());
-}
-
-function broadcastToPeers(peerIds) {
-  peerIds.forEach(id => {
-    sendDataToPeer(id);
-  });
-}
-
-function sendDataToPeer(peerId) {
-  if (easyrtc.getConnectStatus(peerId) === easyrtc.IS_CONNECTED) {
-    easyrtc.sendDataP2P(peerId, 'someMessageType', 'Hello P2P!!!!!!');
-  } else {
-    easyrtc.showError('NOT-CONNECTED', `Not connected to ${easyrtc.idToName(peerId)} yet.`);
+  connect() {
+    this.signalClient.discover();
   }
-}
 
-function connectedPeerIds() {
-  return Object.keys(peerConnections).filter(peerId => peerConnections[peerId]);
+  broadcastToConnectedPeers(data) {
+    const peers = this.signalClient.peers();
+    // console.log(JSON.stringify(peers));
+
+    peers.forEach(peer => {
+      console.log(`Broadcasting ${JSON.stringify(data)}`);
+      peer.send(data);
+      // console.log(JSON.stringify(peer));
+    });
+    // broadcastToPeers(connectedPeerIds());
+  }
+
+  id() {
+    return this.socket.id;
+  }
 }

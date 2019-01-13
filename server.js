@@ -2,9 +2,8 @@ const https = require('https');
 const fs = require('fs');
 const express = require('express');
 const io = require('socket.io');
-const easyrtc = require('easyrtc');
 
-process.title = 'node-easyrtc';
+// process.title = 'node-easyrtc';
 
 const httpApp = express();
 httpApp.use(express.static(`${__dirname}/static/`));
@@ -19,58 +18,23 @@ const webServer = https.createServer(
 );
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
+const signalServer = require('simple-signal-server')(socketServer);
 
-// Overriding the default easyrtcAuth listener, only so we can directly access its callback
-easyrtc.events.on('easyrtcAuth', (socket, easyrtcid, msg, socketCallback, callback) => {
-  easyrtc.events.defaultListeners.easyrtcAuth(
-    socket,
-    easyrtcid,
-    msg,
-    socketCallback,
-    (err, connectionObj) => {
-      if (err || !msg.msgData || !msg.msgData.credential || !connectionObj) {
-        callback(err, connectionObj);
-        return;
-      }
+const allIDs = new Set();
 
-      connectionObj.setField('credential', msg.msgData.credential, { isShared: false });
-
-      console.log(
-        `[${easyrtcid}] Credential saved!`,
-        connectionObj.getFieldValueSync('credential')
-      );
-
-      callback(err, connectionObj);
-    }
-  );
+signalServer.on('discover', request => {
+  const clientID = request.socket.id; // you can use any kind of identity, here we use socket.id
+  allIDs.add(clientID); // keep track of all connected peers
+  request.discover(clientID, Array.from(allIDs)); // respond with id and list of other peers
 });
 
-// To test, lets print the credential to the console for every room join!
-easyrtc.events.on('roomJoin', (connectionObj, roomName, roomParameter, callback) => {
-  console.log(
-    `[${connectionObj.getEasyrtcid()}] Credential retrieved!`,
-    connectionObj.getFieldValueSync('credential')
-  );
-  easyrtc.events.defaultListeners.roomJoin(connectionObj, roomName, roomParameter, callback);
+signalServer.on('disconnect', socket => {
+  const clientId = socket.id;
+  allIDs.delete(clientId);
 });
 
-easyrtc.listen(httpApp, socketServer, null, (err, rtcRef) => {
-  console.log('Initiated');
-
-  rtcRef.events.on(
-    'roomCreate',
-    (appObj, creatorConnectionObj, roomName, roomOptions, callback) => {
-      console.log(`roomCreate fired! Trying to create: ${roomName}`);
-
-      appObj.events.defaultListeners.roomCreate(
-        appObj,
-        creatorConnectionObj,
-        roomName,
-        roomOptions,
-        callback
-      );
-    }
-  );
+signalServer.on('request', request => {
+  request.forward(); // forward all requests to connect
 });
 
 webServer.listen(8443, () => {

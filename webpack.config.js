@@ -8,11 +8,27 @@ module.exports = {
   node: {
     fs: 'empty'
   },
-  entry: './src/client.js',
+  entry: './src/App.jsx',
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: ['babel-loader']
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: ['babel-loader'] //, 'eslint-loader']
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['*', '.js', '.jsx']
+  },
   output: {
-    filename: 'client.js',
-    library: 'Client',
-    path: path.resolve(__dirname, 'static', 'js')
+    filename: 'App.js',
+    path: path.resolve(__dirname, 'static', 'dist', 'js')
   },
   optimization: {
     minimizer: [new UglifyJsPlugin()]
