@@ -6,6 +6,7 @@
 # Dependencies
 .psci_modules
 .pulp-cache
+.psc-ide-port
 
 # Generated files
 .psci
