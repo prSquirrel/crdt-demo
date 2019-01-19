@@ -1,10 +1,11 @@
 const path = require('path');
 const Webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
+const isProd = false;
 
 module.exports = {
   target: 'web',
-  mode: 'development',
+  mode: isProd ? 'production' : 'development',
   node: {
     fs: 'empty'
   },
@@ -13,25 +14,40 @@ module.exports = {
     rules: [
       {
         test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
+        exclude: /(node_modules|bower_components)/,
         use: ['babel-loader']
       },
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: /(node_modules|bower_components)/,
         use: ['babel-loader'] //, 'eslint-loader']
+      },
+      {
+        test: /\.purs$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'purs-loader',
+            options: {
+              src: [
+                path.join('src', '**', '*.purs'),
+                path.join('bower_components', 'purescript-*', 'src', '**', '*.purs')
+              ],
+              bundle: isProd,
+              psc: 'psa',
+              watch: !isProd
+            }
+          }
+        ]
       }
     ]
   },
   resolve: {
-    extensions: ['*', '.js', '.jsx']
+    extensions: ['*', '.js', '.jsx', '.purs']
   },
   output: {
     filename: 'App.js',
     path: path.resolve(__dirname, 'static', 'dist', 'js')
-  },
-  optimization: {
-    minimizer: [new UglifyJsPlugin()]
   },
   plugins: [new Webpack.IgnorePlugin(/uws/)]
 };

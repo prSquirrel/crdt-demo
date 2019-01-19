@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { view, store } from 'react-easy-state';
 import Client from './client';
 
+import Main from './purescript/Main';
+
 const counter = store({
   clicks: 0,
   increment: () => counter.clicks++
@@ -11,6 +13,7 @@ const client = new Client();
 
 class Counter extends Component {
   componentDidMount() {
+    Main.main();
     client.connect();
     client.on('data', data => {
       console.log(`Received data: ${data}`);
