@@ -5,7 +5,7 @@
   "private": true,
   "main": "server.js",
   "scripts": {
-    "test": "pulp test",
+    "test-purs": "pulp test",
     "build": "webpack --config webpack.config.js",
     "server": "node server.js"
   },

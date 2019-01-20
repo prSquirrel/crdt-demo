@@ -2,22 +2,32 @@ import React, { Component } from 'react';
 import { view, store } from 'react-easy-state';
 import Client from './client';
 
-import Main from './purescript/Main';
-
-const counter = store({
-  clicks: 0,
-  increment: () => counter.clicks++
-});
+import GCounter from './purescript/GCounter';
+import Util from './purescript/Util';
 
 const client = new Client();
 
+const counter = store({
+  gCounter: GCounter.initial,
+  get clicks() {
+    return GCounter.value(counter.gCounter);
+  },
+  increment: () => {
+    const replicaId = client.id();
+    counter.gCounter = GCounter.increment(replicaId)(counter.gCounter);
+  },
+  merge: other => {
+    counter.gCounter = GCounter.merge(counter.gCounter)(other);
+  }
+});
+
 class Counter extends Component {
   componentDidMount() {
-    Main.main();
     client.connect();
     client.on('data', data => {
       console.log(`Received data: ${data}`);
-      counter.clicks = parseInt(data, 10);
+      const parsed = Util.fromRight(GCounter.fromJson(data));
+      counter.merge(parsed);
     });
     client.on('close', () => {
       console.log('Closed channel');
@@ -32,7 +42,8 @@ class Counter extends Component {
   };
 
   handleReplicate = () => {
-    client.broadcastToConnectedPeers(counter.clicks);
+    const serialized = GCounter.asJson(counter.gCounter);
+    client.broadcastToConnectedPeers(serialized);
   };
 
   render() {
