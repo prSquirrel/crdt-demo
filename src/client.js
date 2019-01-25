@@ -14,6 +14,10 @@ export default class Client extends EventEmitter {
       { 'connect timeout': 10000, 'force new connection': true }
     );
 
+    this.socket.on('connect', () => {
+      this.emit('id_assigned', this.id());
+    });
+
     if (!this.socket) {
       throw new Error('io.connect failed');
     } else {
@@ -32,25 +36,27 @@ export default class Client extends EventEmitter {
       peer.on('error', err => {
         this.emit('error', err);
       });
+      peer.on('connect', () => {
+        this.emit('connect');
+      });
     };
 
     this.signalClient.on('discover', async allIds => {
       console.debug(`All ids: ${JSON.stringify(allIds)}`);
 
       const peerOptions = {};
-      const connections = allIds
-        .filter(id => id !== this.id())
-        .map(id =>
-          this.signalClient
-            .connect(
-              id,
-              {},
-              peerOptions
-            )
-            .then(({ peer, metadata }) => {
-              registerPeerHandlers(peer);
-            })
-        );
+      const nonLocalIds = allIds.filter(id => id !== this.id());
+      const connections = nonLocalIds.map(id =>
+        this.signalClient
+          .connect(
+            id,
+            {},
+            peerOptions
+          )
+          .then(({ peer, metadata }) => {
+            registerPeerHandlers(peer);
+          })
+      );
       return Promise.all(connections); // (initiator side)
     });
 

@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
 import { view, store } from 'react-easy-state';
-import Client from './client';
+import PropTypes from 'prop-types';
 
 import GCounter from './purescript/GCounter';
 import Util from './purescript/Util';
 
-const client = new Client();
+import clientStore from './clientStore';
 
 const counter = store({
   gCounter: GCounter.initial,
   get clicks() {
     return GCounter.value(counter.gCounter);
   },
-  increment: () => {
-    const replicaId = client.id();
+  increment: replicaId => {
     counter.gCounter = GCounter.increment(replicaId)(counter.gCounter);
   },
   merge: other => {
@@ -22,41 +21,64 @@ const counter = store({
 });
 
 class Counter extends Component {
-  componentDidMount() {
-    client.connect();
-    client.on('data', data => {
+  static propTypes = {};
+
+  counterStyle = {
+    fontSize: '30px'
+  };
+
+  incrementButtonStyle = {
+    border: 'none',
+    height: '50px',
+    backgroundColor: '#5f63e8'
+  };
+
+  replicateButtonStyle = {
+    border: 'none',
+    height: '50px',
+    backgroundColor: '#e8be5e'
+  };
+
+  constructor(props) {
+    super(props);
+
+    clientStore.client.on('data', data => {
       console.log(`Received data: ${data}`);
       const parsed = Util.fromRight(GCounter.fromJson(data));
       counter.merge(parsed);
     });
-    client.on('close', () => {
+    clientStore.client.on('close', () => {
       console.log('Closed channel');
     });
-    client.on('error', err => {
+    clientStore.client.on('error', err => {
       console.log(`Channel error: ${err}`);
     });
   }
 
+  componentDidMount() {}
+
   handleIncrement = () => {
-    counter.increment();
+    const replicaId = clientStore.id;
+    counter.increment(replicaId);
   };
 
   handleReplicate = () => {
     const serialized = GCounter.asJson(counter.gCounter);
-    client.broadcastToConnectedPeers(serialized);
+    clientStore.client.broadcastToConnectedPeers(serialized);
   };
 
   render() {
     return (
       <div>
-        <div>
+        <div style={this.counterStyle}>
           Clicks:
           {counter.clicks}
         </div>
-        <button type="button" onClick={this.handleIncrement}>
+        <button type="button" onClick={this.handleIncrement} style={this.incrementButtonStyle}>
           Increment
         </button>
-        <button type="button" onClick={this.handleReplicate}>
+
+        <button type="button" onClick={this.handleReplicate} style={this.replicateButtonStyle}>
           Replicate
         </button>
       </div>
