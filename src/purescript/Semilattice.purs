@@ -3,20 +3,29 @@ module Semilattice
   , join, (\/)
   ) where
 
-import Prelude (class Semigroup, (<>))
--- import Data.Map as Map
+import Data.Ord
 
--- | A algebraic structure with element meets: <http://en.wikipedia.org/wiki/Semilattice>
+import Data.Map as Map
+import Data.Ord.Max (Max)
+import Prelude ((<>))
+
+-- | A join semilattice: http://en.wikipedia.org/wiki/Semilattice
 --
--- > Associativity: x /\ (y /\ z) == (x /\ y) /\ z
--- > Commutativity: x /\ y == y /\ x
--- > Idempotency:   x /\ x == x
-class Semigroup a <= Semilattice a
-
-join :: forall a. Semilattice a => a -> a -> a
-join = (<>)
+-- > Associativity: x \/ (y \/ z) == (x \/ y) \/ z
+-- > Commutativity: x \/ y == y \/ x
+-- > Idempotency:   x \/ x == x
+class Semilattice a where
+  join :: a -> a -> a
 
 infixr 6 join as \/
 
--- instance mapJoinSemiLattice :: (Ord k, JoinSemiLattice v) => JoinSemiLattice (Map.Map k v) where
---   join = Map.unionWith join
+-- Collections
+instance mapSemilattice :: (Ord k, Semilattice v) => Semilattice (Map.Map k v) where
+  join = Map.unionWith join
+
+-- Semigroup
+instance upperBoundFormsSemilattice :: Ord a => Semilattice (Max a) where
+  join = (<>)
+
+instance semilatticeInt :: Semilattice Int where
+  join = max

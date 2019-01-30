@@ -5,7 +5,9 @@ import Effect (Effect)
 import Effect.Console (log)
 import Test.QuickCheck
 
+import Test.Semilattice as Semilattice
+
 main :: Effect Unit
 main = do
-  quickCheck \n -> n + 1 == 1 + n
-
+  log "Semilattice tests"
+  Semilattice.test

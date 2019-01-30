@@ -27,6 +27,7 @@ type IntMap key = Map.Map key Int
 type ReplicaId = String
 
 newtype GCounter = GCounter (IntMap ReplicaId)
+derive newtype instance semilatticeGCounter :: Semilattice GCounter
 
 initial :: GCounter
 initial = GCounter (Map.empty)
@@ -58,8 +59,3 @@ fromJson json = case JSON.readJSON json of
     Right (GCounter m)
   Left e -> do
     Left (show e)
-
-instance semilatticeGCounter :: Semilattice GCounter
-
-instance semigroupGCounter :: Semigroup GCounter where
-  append (GCounter a) (GCounter b) = GCounter (Map.unionWith max a b)
