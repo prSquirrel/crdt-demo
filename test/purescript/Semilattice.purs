@@ -1,34 +1,43 @@
 module Test.Semilattice where
 
 import Data.Map as Map
-import Data.Tuple (Tuple)
+import Data.Map.Gen (genMap)
 import Effect (Effect)
 import Effect.Console (log)
-import Prelude (class Eq, Unit, discard, map, (==))
+import Prelude
 import Semilattice (class Semilattice, (\/))
 import Test.QuickCheck (class Arbitrary, arbitrary, quickCheck)
 import Type.Data.Boolean (kind Boolean)
+import Type.Proxy (Proxy(..))
 
 newtype IntMap = IntMap (Map.Map String Int)
 derive newtype instance eqIntMap :: Eq IntMap
 derive newtype instance semilatticeIntMap :: Semilattice IntMap
 
-instance arbitraryIntMap :: Arbitrary IntMap where
-  arbitrary = map fromArray arbitrary
-    where
-      fromArray :: Array (Tuple String Int) -> IntMap
-      fromArray a = IntMap (Map.fromFoldable a)
+instance arbitraryMap :: Arbitrary IntMap where
+  arbitrary = IntMap <$> genMap arbitrary arbitrary
 
 test :: Effect Unit
 test = do
-  log "Associative law x \\/ (y \\/ z) == (x \\/ y) \\/ z"
-  quickCheck (associative :: IntMap ->  IntMap -> IntMap -> Boolean)
+  checkSemilatticeLaws (Proxy :: Proxy IntMap)
 
-  log "Idempotence law x \\/ x == x"
-  quickCheck (idempotent :: IntMap -> Boolean)
+-- Test.QuickCheck.Property.(.&&.) would be nice
+checkSemilatticeLaws 
+  :: forall s
+   . Arbitrary s 
+  => Eq s 
+  => Semilattice s 
+  => Proxy s 
+  -> Effect Unit
+checkSemilatticeLaws _ = do
+  log "Associativity law"
+  quickCheck (associative :: s ->  s -> s -> Boolean)
 
-  log "Commutativity law x \\/ y == y \\/ x"
-  quickCheck (commutative :: IntMap -> IntMap -> Boolean)
+  log "Idempotence law"
+  quickCheck (idempotent :: s -> Boolean)
+
+  log "Commutativity law"
+  quickCheck (commutative :: s -> s -> Boolean)
 
 associative :: forall s. Eq s => Semilattice s => s -> s -> s -> Boolean
 associative x y z = (x \/ (y \/ z)) == ((x \/ y) \/ z)
