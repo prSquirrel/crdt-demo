@@ -19,13 +19,17 @@ class Semilattice a where
 
 infixr 6 join as \/
 
--- Collections
-instance mapSemilattice :: (Ord k, Semilattice v) => Semilattice (Map.Map k v) where
-  join = Map.unionWith join
 
 -- Semigroup
 instance upperBoundFormsSemilattice :: Ord a => Semilattice (Max a) where
   join = (<>)
 
+
+-- Collections
+instance mapSemilattice :: (Ord k, Semilattice v) => Semilattice (Map.Map k v) where
+  join = Map.unionWith join
+
+
+-- Primitives
 instance semilatticeInt :: Semilattice Int where
   join = max
