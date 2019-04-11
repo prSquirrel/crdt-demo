@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { view, store } from 'react-easy-state';
 import PropTypes from 'prop-types';
 
-import GCounter from './purescript/GCounter';
-import Util from './purescript/Util';
-
+import GCounter from './purescript/GCounter.purs';
+import Util from './purescript/Util.purs';
 import clientStore from './clientStore';
 
 const counter = store({
@@ -43,15 +42,8 @@ class Counter extends Component {
     super(props);
 
     clientStore.client.on('data', data => {
-      console.log(`Received data: ${data}`);
       const parsed = Util.fromRight(GCounter.fromJson(data));
       counter.merge(parsed);
-    });
-    clientStore.client.on('close', () => {
-      console.log('Closed channel');
-    });
-    clientStore.client.on('error', err => {
-      console.log(`Channel error: ${err}`);
     });
   }
 

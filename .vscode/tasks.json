@@ -3,23 +3,21 @@
   // for the documentation about the tasks.json format
   "version": "2.0.0",
   "tasks": [
-    {
-      "type": "npm",
-      "script": "build",
-      "path": "/",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "type": "npm",
-      "script": "test-purs",
-      "path": "/",
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      }
-    }
+    // {
+    //   "type": "npm",
+    //   "script": "build",
+    //   "group": {
+    //     "kind": "build",
+    //     "isDefault": true
+    //   }
+    // },
+    // {
+    //   "type": "npm",
+    //   "script": "test-purs",
+    //   "group": {
+    //     "kind": "test",
+    //     "isDefault": true
+    //   }
+    // }
   ]
 }

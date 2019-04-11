@@ -13,16 +13,6 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
-        exclude: /(node_modules|bower_components)/,
-        use: ['babel-loader']
-      },
-      {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: ['babel-loader'] //, 'eslint-loader']
-      },
-      {
         test: /\.purs$/,
         exclude: /node_modules/,
         use: [
@@ -39,6 +29,11 @@ module.exports = {
             }
           }
         ]
+      },
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /(node_modules|bower_components)/,
+        use: ['babel-loader']
       }
     ]
   },
