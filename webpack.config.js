@@ -10,26 +10,11 @@ module.exports = {
     fs: 'empty'
   },
   entry: './src/App.jsx',
+  devtool: 'source-map',
   module: {
     rules: [
-      {
-        test: /\.purs$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'purs-loader',
-            options: {
-              src: [
-                path.join('src', '**', '*.purs'),
-                path.join('bower_components', 'purescript-*', 'src', '**', '*.purs')
-              ],
-              bundle: isProd,
-              psc: 'psa',
-              watch: !isProd
-            }
-          }
-        ]
-      },
+      { test: /\.tsx?$/, loader: 'awesome-typescript-loader' },
+      { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
       {
         test: /\.(js|jsx)$/,
         exclude: /(node_modules|bower_components)/,
@@ -38,11 +23,15 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['*', '.js', '.jsx', '.purs']
+    extensions: ['*', '.js', '.jsx', '.ts', '.tsx', '.json']
   },
   output: {
     filename: 'App.js',
     path: path.resolve(__dirname, 'static', 'dist', 'js')
+  },
+  externals: {
+    react: 'React',
+    'react-dom': 'ReactDOM'
   },
   plugins: [new Webpack.IgnorePlugin(/uws/)]
 };

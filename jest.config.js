@@ -11,7 +11,5 @@ module.exports = {
     '<rootDir>/node_modules/',
     '<rootDir>/output/'
   ],
-  moduleNameMapper: {
-    '^./purescript/(.+?)\\.purs$': '<rootDir>/output/$1'
-  }
+  moduleNameMapper: {}
 };

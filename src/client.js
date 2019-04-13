@@ -4,9 +4,6 @@ import io from 'socket.io-client';
 // import Peer from 'simple-peer';
 import SimpleSignalClient from 'simple-signal-client';
 import EventEmitter from 'nanobus';
-import VClock from './purescript/VClock.purs';
-import Util from './purescript/Util.purs';
-import Mailbox from './Mailbox';
 
 export default class Client extends EventEmitter {
   constructor() {
@@ -29,16 +26,9 @@ export default class Client extends EventEmitter {
 
     this.signalClient = new SimpleSignalClient(this.socket); // Uses an existing socket.io-client instance
 
-    this.clock = VClock.initial;
-
     const registerPeerHandlers = peer => {
       peer.on('data', payload => {
-        const [msgClock, data] = JSON.parse(payload);
-        const parsedMsgClock = Util.fromRight(VClock.fromJson(msgClock));
-        //merging step should be done only after processing message
-        this.mergeClock(parsedMsgClock);
-
-        console.log(`RCVD clock ${msgClock}`);
+        const data = JSON.parse(payload);
         console.log(`RCVD data ${data}`);
         this.emit('data', data);
       });
@@ -90,27 +80,15 @@ export default class Client extends EventEmitter {
   broadcastToConnectedPeers(data) {
     const peers = this.signalClient.peers();
     // console.log(JSON.stringify(peers));
-    this.advanceClock();
     peers.forEach(peer => {
       this.sendMessage(peer, data);
     });
   }
 
   sendMessage(peer, data) {
-    const serializedClock = VClock.asJson(this.clock);
-    const payload = [serializedClock, data];
+    const payload = data;
     console.log(`Broadcasting ${payload}`);
     peer.send(JSON.stringify(payload));
-    // console.log(JSON.stringify(peer));
-  }
-
-  advanceClock() {
-    const id = this.id();
-    this.clock = VClock.increment(id)(this.clock);
-  }
-
-  mergeClock(otherClock) {
-    this.clock = VClock.merge(this.clock)(otherClock);
   }
 
   id() {

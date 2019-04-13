@@ -1,13 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Counter from './Counter';
 import Dashboard from './Dashboard';
+import Canvas from './Canvas';
+import { Hello } from './Hello';
 
 const mountNode = document.getElementById('app');
 ReactDOM.render(
   <div>
     <Dashboard />
-    <Counter />
+    <Canvas />
+    <Hello />
   </div>,
   mountNode
 );
