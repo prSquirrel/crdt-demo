@@ -19,11 +19,23 @@ module.exports = {
         test: /\.(js|jsx)$/,
         exclude: /(node_modules|bower_components)/,
         use: ['babel-loader']
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'css-modules-typescript-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true
+            }
+          }
+        ]
       }
     ]
   },
   resolve: {
-    extensions: ['*', '.js', '.jsx', '.ts', '.tsx', '.json']
+    extensions: ['*', '.js', '.jsx', '.ts', '.tsx', '.json', '.css']
   },
   output: {
     filename: 'App.js',
