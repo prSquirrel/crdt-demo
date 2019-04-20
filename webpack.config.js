@@ -9,7 +9,7 @@ module.exports = {
   node: {
     fs: 'empty'
   },
-  entry: './src/App.jsx',
+  entry: './src/App.tsx',
   devtool: 'source-map',
   module: {
     rules: [

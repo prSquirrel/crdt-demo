@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import { view, store } from 'react-easy-state';
-import PropTypes from 'prop-types';
+import { view } from 'react-easy-state';
 import clientStore from './clientStore';
 
 class Dashboard extends Component {
   static propTypes = {};
 
-  constructor(props) {
+  constructor(props: any) {
     super(props);
   }
 

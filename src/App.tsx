@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import Dashboard from './Dashboard';
 // import Canvas from './Canvas';
 import ReplicatedTextInput from './ReplicatedTextInput';
+import clientStore from './clientStore';
 
 const mountNode = document.getElementById('app');
 ReactDOM.render(
@@ -13,3 +14,5 @@ ReactDOM.render(
   </div>,
   mountNode
 );
+
+clientStore.connect();

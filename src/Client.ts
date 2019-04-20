@@ -5,14 +5,17 @@ import io from 'socket.io-client';
 import SimpleSignalClient from 'simple-signal-client';
 import EventEmitter from 'nanobus';
 
-export default class Client extends EventEmitter {
+class Client extends EventEmitter {
+  private socket: SocketIOClient.Socket;
+  private signalClient: SimpleSignalClient;
+
   constructor() {
     super();
 
-    this.socket = io.connect(
-      'https://localhost:8443',
-      { 'connect timeout': 10000, 'force new connection': true }
-    );
+    this.socket = io.connect('https://localhost:8443', {
+      timeout: 10000,
+      forceNew: true
+    });
 
     this.socket.on('connect', () => {
       this.emit('id_assigned', this.id());
@@ -26,8 +29,8 @@ export default class Client extends EventEmitter {
 
     this.signalClient = new SimpleSignalClient(this.socket); // Uses an existing socket.io-client instance
 
-    const registerPeerHandlers = peer => {
-      peer.on('data', payload => {
+    const registerPeerHandlers = (peer: any) => {
+      peer.on('data', (payload: string) => {
         const data = JSON.parse(payload);
         console.log(`RCVD data ${data}`);
         this.emit('data', data);
@@ -36,7 +39,7 @@ export default class Client extends EventEmitter {
         console.debug(`Closed channel`);
         this.emit('close');
       });
-      peer.on('error', err => {
+      peer.on('error', (err: string) => {
         console.log(`Channel error: ${err}`);
         this.emit('error', err);
       });
@@ -46,26 +49,20 @@ export default class Client extends EventEmitter {
       });
     };
 
-    this.signalClient.on('discover', async allIds => {
+    this.signalClient.on('discover', async (allIds: string[]) => {
       console.debug(`All ids: ${JSON.stringify(allIds)}`);
 
       const peerOptions = {};
       const nonLocalIds = allIds.filter(id => id !== this.id());
       const connections = nonLocalIds.map(id =>
-        this.signalClient
-          .connect(
-            id,
-            {},
-            peerOptions
-          )
-          .then(({ peer, metadata }) => {
-            registerPeerHandlers(peer);
-          })
+        this.signalClient.connect(id, {}, peerOptions).then(({ peer, metadata }: any) => {
+          registerPeerHandlers(peer);
+        })
       );
       return Promise.all(connections); // (initiator side)
     });
 
-    this.signalClient.on('request', async request => {
+    this.signalClient.on('request', async (request: any) => {
       const { peer } = await request.accept(); // Accept the incoming request
       console.log(`Accepted ${JSON.stringify(peer)}`);
       registerPeerHandlers(peer);
@@ -74,18 +71,18 @@ export default class Client extends EventEmitter {
   }
 
   connect() {
-    this.signalClient.discover();
+    this.signalClient.discover({});
   }
 
-  broadcastToConnectedPeers(data) {
+  broadcastToConnectedPeers(data: any) {
     const peers = this.signalClient.peers();
     // console.log(JSON.stringify(peers));
-    peers.forEach(peer => {
+    peers.forEach((peer: any) => {
       this.sendMessage(peer, data);
     });
   }
 
-  sendMessage(peer, data) {
+  private sendMessage(peer: any, data: any) {
     const payload = data;
     console.log(`Broadcasting ${payload}`);
     peer.send(JSON.stringify(payload));
@@ -95,3 +92,5 @@ export default class Client extends EventEmitter {
     return this.socket.id;
   }
 }
+
+export const client = new Client();

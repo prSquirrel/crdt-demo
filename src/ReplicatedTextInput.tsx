@@ -3,19 +3,36 @@ import { view, store } from 'react-easy-state';
 import { Seq } from './crdt/sequence/Seq';
 import { Op } from './crdt/sequence/op/Op';
 import { diff, TextOp } from './Combobulator';
+import clientStore from './clientStore';
 
-const textStore = store({
-  selection: {
-    start: 0,
-    end: 0
+interface TextStore {
+  seq: Seq<string>;
+  readonly ready: boolean;
+  readonly content: string;
+  init(id: string): void;
+  applyOps(ops: TextOp[]): Op[];
+}
+
+const textStore: TextStore = store({
+  seq: null,
+  get ready(): boolean {
+    return textStore.seq != null;
   },
-  seq: new Seq<string>('john'),
   get content(): string {
-    return textStore.seq.toArray().join('');
+    return textStore.ready ? textStore.seq.toArray().join('') : 'NOT READY';
+  },
+  init(id: string): void {
+    if (!textStore.ready) {
+      textStore.seq = new Seq<string>(id);
+    }
   },
   applyOps(ops: TextOp[]): Op[] {
-    const opsToReplicate = ops.map(op => op.applyTo(textStore.seq));
-    return opsToReplicate;
+    if (textStore.ready) {
+      const opsToReplicate = ops.map(op => op.applyTo(textStore.seq));
+      return opsToReplicate;
+    } else {
+      return [];
+    }
   }
 });
 
@@ -24,12 +41,26 @@ interface Props {}
 class ReplicatedTextInput extends React.Component<Props, {}> {
   private textAreaRef: React.RefObject<HTMLTextAreaElement>;
 
+  private textAreaStore = store({
+    selection: {
+      start: 0,
+      end: 0
+    }
+  });
+
   constructor(props: Props) {
     super(props);
     this.textAreaRef = React.createRef();
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    clientStore.onIdAssigned(id => {
+      textStore.init(id);
+    });
+    // console.log(`Inserting 20 000 characters`);
+    // Array.from({ length: 20000 }, (_, i) => textStore.seq.insert('X', i));
+    // console.log(`Finished. ${new Date()}`);
+  }
 
   componentWillUnmount() {}
 
@@ -40,8 +71,8 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
     const ops = diff(
       textStore.content,
       newContent,
-      textStore.selection.start,
-      textStore.selection.end
+      this.textAreaStore.selection.start,
+      this.textAreaStore.selection.end
     );
 
     const opsToReplicate = textStore.applyOps(ops);
@@ -51,8 +82,8 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
   private onSelect = (ev: any) => {
     const start = ev.target.selectionStart;
     const end = ev.target.selectionEnd;
-    textStore.selection.start = start;
-    textStore.selection.end = end;
+    this.textAreaStore.selection.start = start;
+    this.textAreaStore.selection.end = end;
   };
 
   render() {
