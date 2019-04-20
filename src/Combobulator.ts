@@ -63,9 +63,7 @@ export function diff(
     const absoluteIndex = selectionStart + index;
     if (beforeChar != null) {
       if (afterChar != null) {
-        if (beforeChar == afterChar) {
-          //do nothing
-        } else {
+        if (beforeChar != afterChar) {
           //remove and insert (overwrite)
           operations.push(new Remove(absoluteIndex), new Insert(afterChar, absoluteIndex));
         }
@@ -79,8 +77,6 @@ export function diff(
         //insert
         operations.push(new Insert(afterChar, absoluteIndex));
         offsetDueToPreviousUnbalancedOperation += 1;
-      } else {
-        //do nothing
       }
     }
   }
