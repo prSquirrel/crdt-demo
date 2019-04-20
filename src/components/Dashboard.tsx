@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { view } from 'react-easy-state';
-import clientStore from './clientStore';
+import clientStore from '../network/clientStore';
 
 class Dashboard extends Component {
   static propTypes = {};

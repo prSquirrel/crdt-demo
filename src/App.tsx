@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Dashboard from './Dashboard';
+import Dashboard from './components/Dashboard';
 // import Canvas from './Canvas';
-import ReplicatedTextInput from './ReplicatedTextInput';
-import clientStore from './clientStore';
+import ReplicatedTextInput from './components/ReplicatedTextInput';
+import clientStore from './network/clientStore';
 
 const mountNode = document.getElementById('app');
 ReactDOM.render(

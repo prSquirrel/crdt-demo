@@ -1,5 +1,5 @@
-import { Seq } from './crdt/sequence/Seq';
-import { Op, InsertOp, RemoveOp } from './crdt/sequence/op/Op';
+import { Seq } from '../crdt/sequence/Seq';
+import { Op, InsertOp, RemoveOp } from '../crdt/sequence/op/Op';
 
 export interface TextOp {
   applyTo(textSeq: Seq<string>): Op;

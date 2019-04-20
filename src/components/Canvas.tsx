@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { fabric } from 'fabric';
 import { view } from 'react-easy-state';
-import { Seq } from './crdt/sequence/Seq';
+import { Seq } from '../crdt/sequence/Seq';
 
 interface Props {}
 

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { view, store } from 'react-easy-state';
-import { Seq } from './crdt/sequence/Seq';
-import { Op } from './crdt/sequence/op/Op';
-import { diff, TextOp } from './Combobulator';
-import clientStore from './clientStore';
+import { Seq } from '../crdt/sequence/Seq';
+import { Op } from '../crdt/sequence/op/Op';
+import { diff, TextOp } from '../util/Combobulator';
+import clientStore from '../network/clientStore';
 
 interface TextStore {
   seq: Seq<string>;
