@@ -1,8 +1,8 @@
-import { Seq } from '../crdt/sequence/Seq';
+import { ArraySeq } from '../crdt/sequence/ArraySeq';
 import { Op, InsertOp, RemoveOp } from '../crdt/sequence/op/Op';
 
 export interface TextOp {
-  applyTo(textSeq: Seq<string>): Op;
+  applyTo(textSeq: ArraySeq<string>): Op;
 }
 
 export class Insert implements TextOp {
@@ -14,7 +14,7 @@ export class Insert implements TextOp {
     this.position = position;
   }
 
-  applyTo(textSeq: Seq<string>): InsertOp<string> {
+  applyTo(textSeq: ArraySeq<string>): InsertOp<string> {
     return textSeq.insert(this.value, this.position);
   }
 }
@@ -26,7 +26,7 @@ export class Remove implements TextOp {
     this.position = position;
   }
 
-  applyTo(textSeq: Seq<string>): RemoveOp {
+  applyTo(textSeq: ArraySeq<string>): RemoveOp {
     return textSeq.remove(this.position);
   }
 }

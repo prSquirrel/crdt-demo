@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { view, store } from 'react-easy-state';
-import { Seq } from '../crdt/sequence/Seq';
+import { ArraySeq } from '../crdt/sequence/ArraySeq';
 import { Op } from '../crdt/sequence/op/Op';
 import { diff, TextOp } from '../util/Combobulator';
 import clientStore from '../network/clientStore';
 
 interface TextStore {
-  seq: Seq<string>;
+  seq: ArraySeq<string>;
   readonly ready: boolean;
   readonly content: string;
   init(id: string): void;
@@ -23,7 +23,7 @@ const textStore: TextStore = store({
   },
   init(id: string): void {
     if (!textStore.ready) {
-      textStore.seq = new Seq<string>(id);
+      textStore.seq = new ArraySeq<string>(id);
     }
   },
   applyOps(ops: TextOp[]): Op[] {
