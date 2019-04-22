@@ -56,10 +56,11 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
   componentDidMount() {
     clientStore.onIdAssigned(id => {
       textStore.init(id);
+
+      // console.log(`Inserting 1000 characters @ ${new Date()}`);
+      // Array.from({ length: 1000 }, (_, i) => textStore.seq.insert('X', i));
+      // console.log(`Finished @ ${new Date()}`);
     });
-    // console.log(`Inserting 20 000 characters`);
-    // Array.from({ length: 20000 }, (_, i) => textStore.seq.insert('X', i));
-    // console.log(`Finished. ${new Date()}`);
   }
 
   componentWillUnmount() {}
