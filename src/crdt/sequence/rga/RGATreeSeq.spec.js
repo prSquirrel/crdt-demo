@@ -1,12 +1,12 @@
 import { RGATreeSeq } from './RGATreeSeq';
 
-const user1 = new RGATreeSeq('a');
-const user2 = new RGATreeSeq('b');
-
 const asStr = tree => tree.toArray().join('');
 const applyOps = (user, ops) => ops.forEach(op => user.apply(op));
 
 test('groups characters from same session together after concurrent editing', () => {
+  const user1 = new RGATreeSeq('a');
+  const user2 = new RGATreeSeq('b');
+
   // Both users start from 'Hello!'
   const hello = [...'Hello!'].map((c, idx) => user1.insert(c, idx));
   applyOps(user2, hello);
@@ -36,4 +36,9 @@ test('groups characters from same session together after concurrent editing', ()
   // Sync user 2 to user 1
   applyOps(user1, alice);
   expect(asStr(user1)).toEqual('Hello dear reader Alice!');
+});
+
+test('perform 5k consecutive inserts', () => {
+  const seq = new RGATreeSeq('wxr8GMi4qRscDwiyAABW');
+  Array.from({ length: 5000 }, (_, i) => seq.insert('X', i));
 });
