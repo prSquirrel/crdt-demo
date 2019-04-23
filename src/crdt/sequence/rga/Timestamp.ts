@@ -1,4 +1,7 @@
-export class Timestamp {
+import { Identifiable } from '../../../util/Identifiable';
+import { Comparable } from '../../../util/Comparable';
+
+export class Timestamp implements Identifiable, Comparable {
   readonly site: string;
   readonly clock: number;
 
@@ -7,7 +10,15 @@ export class Timestamp {
     this.clock = clock;
   }
 
-  get strId(): string {
-    return this.clock + this.site;
+  toIdString(): string {
+    return this.site + this.clock;
+  }
+
+  compareTo(that: Timestamp): -1 | 0 | 1 {
+    if (this.clock < that.clock) return -1;
+    if (this.clock > that.clock) return 1;
+    if (this.site < that.site) return -1;
+    if (this.site > that.site) return 1;
+    return 0;
   }
 }

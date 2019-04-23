@@ -1,5 +1,5 @@
-import { TimestampSet } from '../TimestampSet';
 import { Timestamp } from '../Timestamp';
+import { ValueSet } from '../../../../util/ValueSet';
 
 export enum OpKind {
   Insert = 1,
@@ -17,13 +17,13 @@ export abstract class Op {
 export class InsertOp<T> extends Op {
   readonly value: T;
   readonly timestamp: Timestamp;
-  readonly happenedBefore: TimestampSet;
+  readonly happenedBefore: ValueSet<Timestamp>;
   readonly referenceTimestamp: Timestamp;
 
   constructor(
     value: T,
     newTimestamp: Timestamp,
-    happenedBefore: TimestampSet,
+    happenedBefore: ValueSet<Timestamp>,
     referenceTimestamp: Timestamp
   ) {
     super(OpKind.Insert);

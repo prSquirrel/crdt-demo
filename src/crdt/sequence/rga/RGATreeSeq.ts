@@ -1,7 +1,7 @@
 import { Op, OpKind, InsertOp, RemoveOp } from './op/Op';
 import { RGAParentNode, RGABranchNode, RGANode } from './RGANode';
-import { TimestampSet } from './TimestampSet';
 import { Timestamp } from './Timestamp';
+import { ValueSet } from '../../../util/ValueSet';
 
 export class RGATreeSeq<T> {
   private readonly site: string;
@@ -17,7 +17,7 @@ export class RGATreeSeq<T> {
 
     this.root = new RGAParentNode();
     this.cache = new Map();
-    this.cache.set(this.root.timestamp.strId, this.root);
+    this.cache.set(this.root.timestamp.toIdString(), this.root);
   }
 
   insert(value: T, position: number): InsertOp<T> {
@@ -27,9 +27,7 @@ export class RGATreeSeq<T> {
     const newTimestamp = new Timestamp(this.site, ++this.clock);
 
     // all observed siblings of reference node at the moment of insertion
-    const happenedBefore = TimestampSet.of(
-      referenceNode.childrenAsc.map(sibling => sibling.timestamp)
-    );
+    const happenedBefore = ValueSet.of(referenceNode.childrenAsc.map(sibling => sibling.timestamp));
     const op = new InsertOp<T>(value, newTimestamp, happenedBefore, referenceNode.timestamp);
     this.applyInsert(op);
     return op;
@@ -79,10 +77,11 @@ export class RGATreeSeq<T> {
   }
 
   private applyInsert(insert: InsertOp<T>): void {
-    const referenceNode = this.cache.get(insert.referenceTimestamp.strId);
+    console.log(insert);
+    const referenceNode = this.cache.get(insert.referenceTimestamp.toIdString());
     const newNode = new RGABranchNode<T>(insert.value, insert.timestamp, insert.happenedBefore);
     referenceNode.addSibling(newNode);
-    this.cache.set(newNode.timestamp.strId, newNode);
+    this.cache.set(newNode.timestamp.toIdString(), newNode);
   }
 
   private applyRemove(remove: RemoveOp): void {

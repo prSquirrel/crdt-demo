@@ -1,21 +1,22 @@
-import { TimestampSet } from './TimestampSet';
 import { Timestamp } from './Timestamp';
+import { ValueSet } from '../../../util/ValueSet';
+import { Comparable } from '../../../util/Comparable';
 
-export abstract class RGANode<T> {
+export abstract class RGANode<T> implements Comparable {
   readonly isParent: boolean;
   hidden: boolean;
   readonly timestamp: Timestamp;
-  readonly happenedBefore: TimestampSet;
+  readonly happenedBefore: ValueSet<Timestamp>;
   element?: T;
 
   abstract readonly childrenAsc: RGANode<T>[];
-  abstract compare(that: RGANode<T>): 1 | -1 | 0;
+  abstract compareTo(that: RGANode<T>): -1 | 0 | 1;
 
   constructor(
     isParent: boolean,
     hidden: boolean,
     timestamp: Timestamp,
-    happenedBefore: TimestampSet,
+    happenedBefore: ValueSet<Timestamp>,
     element?: T
   ) {
     this.isParent = isParent;
@@ -55,7 +56,7 @@ export abstract class RGANode<T> {
     } else {
       // traverse in descending order
       for (let i = children.length; i-- > 0; ) {
-        if (children[i].compare(newNode) < 0) {
+        if (children[i].compareTo(newNode) < 0) {
           //current node precedes new node -> insert after current
           children.splice(i + 1, 0, newNode);
           break;
@@ -68,12 +69,12 @@ export abstract class RGANode<T> {
 export class RGABranchNode<T> extends RGANode<T> {
   readonly childrenAsc: RGABranchNode<T>[];
 
-  constructor(element: T, timestamp: Timestamp, happenedBefore: TimestampSet) {
+  constructor(element: T, timestamp: Timestamp, happenedBefore: ValueSet<Timestamp>) {
     super(false, false, timestamp, happenedBefore, element);
     this.childrenAsc = [];
   }
 
-  compare(that: RGABranchNode<T>): 1 | -1 | 0 {
+  compareTo(that: RGABranchNode<T>): -1 | 0 | 1 {
     if (that.happenedBefore.contains(this.timestamp)) {
       //this happened-before that
       return -1;
@@ -83,12 +84,34 @@ export class RGABranchNode<T> extends RGANode<T> {
     }
 
     //otherwise concurrent
-    return TimestampSet.compareConcurrent(
+    return this.compareConcurrent(
       this.timestamp,
       this.happenedBefore,
       that.timestamp,
       that.happenedBefore
     );
+  }
+
+  // immutable
+  // returns -1 if (timestamp1, history1) < (timestamp2, history2)
+  // returns  1 if (timestamp2, history2) < (timestamp1, history1)
+  // returns  0 otherwise (shouldn't happen in practice)
+  private compareConcurrent(
+    timestamp1: Timestamp,
+    history1: ValueSet<Timestamp>,
+    timestamp2: Timestamp,
+    history2: ValueSet<Timestamp>
+  ): -1 | 0 | 1 {
+    const history1Copy = history1.clone();
+    history1Copy.add(timestamp1);
+
+    const history2Copy = history2.clone();
+    history2Copy.add(timestamp2);
+
+    const min1 = history1Copy.difference(history2).min();
+    const min2 = history2Copy.difference(history1).min();
+
+    return min1.compareTo(min2);
   }
 }
 
@@ -96,11 +119,11 @@ export class RGAParentNode<T> extends RGANode<T> {
   readonly childrenAsc: RGABranchNode<T>[];
 
   constructor() {
-    super(true, true, new Timestamp('', 0), TimestampSet.empty);
+    super(true, true, new Timestamp('', 0), new ValueSet());
     this.childrenAsc = [];
   }
 
-  compare(that: RGABranchNode<T>): -1 {
+  compareTo(that: RGABranchNode<T>): -1 {
     return -1;
   }
 }
