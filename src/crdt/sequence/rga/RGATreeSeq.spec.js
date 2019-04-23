@@ -1,51 +1,39 @@
 import { RGATreeSeq } from './RGATreeSeq';
 
-const user0 = new RGATreeSeq('user0');
-const user1 = new RGATreeSeq('b');
-const user2 = new RGATreeSeq('a');
+const user1 = new RGATreeSeq('a');
+const user2 = new RGATreeSeq('b');
 
-const treeToString = tree => tree.toArray().join('');
+const asStr = tree => tree.toArray().join('');
+const applyOps = (user, ops) => ops.forEach(op => user.apply(op));
 
-const printTree = tree => {
-  console.log('Tree:');
-  console.log(tree);
-  console.log('Pre-order traversal:');
-  console.log(tree.toPreOrderArray());
-  console.log('Array of elements:');
-  console.log(tree.toArray());
-  console.log('String:');
-  console.log(treeToString(tree));
-};
+test('groups characters from same session together after concurrent editing', () => {
+  // Both users start from 'Hello!'
+  const hello = [...'Hello!'].map((c, idx) => user1.insert(c, idx));
+  applyOps(user2, hello);
+  expect(asStr(user1)).toEqual('Hello!');
+  expect(asStr(user2)).toEqual('Hello!');
 
-test('integration test', () => {
-  //both start from 'Hello!' inserted by
-  const hello = [...'Hello!'].map((c, idx) => user0.insert(c, idx));
-  hello.forEach(op => user1.apply(op));
-  printTree(user1);
-  hello.forEach(op => user2.apply(op));
-  printTree(user2);
-
-  //USER 1: insert ' reader' between 'Hello' and '!'
+  // User 1: insert ' reader' between 'Hello' and '!'
   const reader = [...' reader'].map((c, idx) => user1.insert(c, idx + 5));
-  printTree(user1);
+  expect(asStr(user1)).toEqual('Hello reader!');
 
-  //USER 2: insert ' Alice' between 'Hello' and '!'
+  // User 2: insert ' Alice' between 'Hello' and '!'
   const alice = [...' Alice'].map((c, idx) => user2.insert(c, idx + 5));
-  printTree(user2);
+  expect(asStr(user2)).toEqual('Hello Alice!');
 
-  //sync USER 1 to USER 2
-  reader.forEach(op => user2.apply(op));
-  printTree(user2);
+  // Sync user 1 to user 2
+  applyOps(user2, reader);
+  expect(asStr(user2)).toEqual('Hello reader Alice!');
 
-  //USER 1: insert ' dear' between 'Hello' and ' reader!'
+  // User 1: insert ' dear' between 'Hello' and ' reader!'
   const dear = [...' dear'].map((c, idx) => user1.insert(c, idx + 5));
-  printTree(user1);
+  expect(asStr(user1)).toEqual('Hello dear reader!');
 
-  //sync USER 1 to USER 2 again
-  dear.forEach(op => user2.apply(op));
-  printTree(user2);
+  // Sync user 1 to user 2 again
+  applyOps(user2, dear);
+  expect(asStr(user2)).toEqual('Hello dear reader Alice!');
 
-  //sync USER 2 to USER 1
-  alice.forEach(op => user1.apply(op));
-  printTree(user1);
+  // Sync user 2 to user 1
+  applyOps(user1, alice);
+  expect(asStr(user1)).toEqual('Hello dear reader Alice!');
 });
