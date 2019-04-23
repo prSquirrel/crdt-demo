@@ -30,22 +30,20 @@ export abstract class RGANode<T> implements Comparable {
     return this.childrenAsc.length == 0;
   }
 
-  get childrenDesc(): RGANode<T>[] {
-    const children = this.childrenAsc;
+  walkPreOrder(visit: (node: RGANode<T>) => void): void {
+    const stack: RGANode<T>[] = [this];
 
-    const desc = [];
-    for (let i = children.length; i-- > 0; ) {
-      desc.push(children[i]);
+    while (stack.length != 0) {
+      const node = stack.pop();
+      if (!node.hidden) {
+        visit(node);
+      }
+      // since children are sorted by ascending timestamp
+      // it will conveniently reverse them, resulting in correct order
+      node.childrenAsc.forEach(sibling => {
+        stack.push(sibling);
+      });
     }
-    return desc;
-  }
-
-  // not stack-safe
-  walkPreOrder(fn: (node: RGANode<T>) => void): void {
-    if (!this.hidden) {
-      fn(this);
-    }
-    this.childrenDesc.forEach(sibling => sibling.walkPreOrder(fn));
   }
 
   addSibling(newNode: RGANode<T>): void {
