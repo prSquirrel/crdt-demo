@@ -77,7 +77,6 @@ export class RGATreeSeq<T> {
   }
 
   private applyInsert(insert: InsertOp<T>): void {
-    console.log(insert);
     const referenceNode = this.cache.get(insert.referenceTimestamp.toIdString());
     const newNode = new RGABranchNode<T>(insert.value, insert.timestamp, insert.happenedBefore);
     referenceNode.addSibling(newNode);
