@@ -2,8 +2,9 @@ import { Op, OpKind, InsertOp, RemoveOp } from './op/Op';
 import { RGAParentNode, RGABranchNode, RGANode } from './RGANode';
 import { Timestamp } from './Timestamp';
 import { ValueSet } from '../../../util/ValueSet';
+import { RGASeq } from './RGASeq';
 
-export class RGATreeSeq<T> {
+export class RGATreeSeq<T> implements RGASeq<T> {
   private readonly site: string;
   private clock: number;
 
@@ -49,7 +50,6 @@ export class RGATreeSeq<T> {
     return preOrderArray[position];
   }
 
-  //not stack-safe
   toPreOrderArray(): RGANode<T>[] {
     const elements: RGANode<T>[] = [];
     if (this.root) {

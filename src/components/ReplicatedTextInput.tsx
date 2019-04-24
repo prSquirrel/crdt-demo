@@ -1,47 +1,19 @@
 import * as React from 'react';
 import { view, store } from 'react-easy-state';
-import { ArraySeq } from '../crdt/sequence/ArraySeq';
-import { Op } from '../crdt/sequence/op/Op';
+import { RGASeq } from '../crdt/sequence/rga/RGASeq';
+import { RGATreeSeq } from '../crdt/sequence/rga/RGATreeSeq';
 import { diff, TextOp } from '../util/Combobulator';
 import clientStore from '../network/clientStore';
-
-interface TextStore {
-  seq: ArraySeq<string>;
-  readonly ready: boolean;
-  readonly content: string;
-  init(id: string): void;
-  applyOps(ops: TextOp[]): Op[];
-}
-
-const textStore: TextStore = store({
-  seq: null,
-  get ready(): boolean {
-    return textStore.seq != null;
-  },
-  get content(): string {
-    return textStore.ready ? textStore.seq.toArray().join('') : 'NOT READY';
-  },
-  init(id: string): void {
-    if (!textStore.ready) {
-      textStore.seq = new ArraySeq<string>(id);
-    }
-  },
-  applyOps(ops: TextOp[]): Op[] {
-    if (textStore.ready) {
-      const opsToReplicate = ops.map(op => op.applyTo(textStore.seq));
-      return opsToReplicate;
-    } else {
-      return [];
-    }
-  }
-});
+import { Op } from '../crdt/sequence/rga/op/Op';
 
 interface Props {}
 
 class ReplicatedTextInput extends React.Component<Props, {}> {
   private textAreaRef: React.RefObject<HTMLTextAreaElement>;
+  private textSeq?: RGASeq<string>;
 
   private textAreaStore = store({
+    content: '',
     selection: {
       start: 0,
       end: 0
@@ -55,7 +27,7 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
 
   componentDidMount() {
     clientStore.onIdAssigned(id => {
-      textStore.init(id);
+      this.textSeq = new RGATreeSeq<string>(id);
 
       // console.log(`Inserting 1000 characters @ ${new Date()}`);
       // Array.from({ length: 1000 }, (_, i) => textStore.seq.insert('X', i));
@@ -70,15 +42,32 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
     const newContent = eventTarget.value;
 
     const ops = diff(
-      textStore.content,
+      this.textAreaStore.content,
       newContent,
       this.textAreaStore.selection.start,
       this.textAreaStore.selection.end
     );
 
-    const opsToReplicate = textStore.applyOps(ops);
+    console.log(JSON.stringify(ops));
+    const opsToReplicate = this.applyOps(ops);
+    this.updateContent();
     console.log(JSON.stringify(opsToReplicate));
   };
+
+  private applyOps(ops: TextOp[]): Op[] {
+    if (this.textSeq) {
+      const opsToReplicate = ops.map(op => op.applyTo(this.textSeq));
+      return opsToReplicate;
+    } else {
+      return [];
+    }
+  }
+
+  private updateContent(): void {
+    if (this.textSeq) {
+      this.textAreaStore.content = this.textSeq.toArray().join('');
+    }
+  }
 
   private onSelect = (ev: any) => {
     const start = ev.target.selectionStart;
@@ -91,9 +80,10 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
     return (
       <textarea
         ref={this.textAreaRef}
-        value={textStore.content}
+        value={this.textAreaStore.content}
         onSelect={this.onSelect}
         onChange={this.onChange}
+        spellCheck={false}
       />
     );
   }

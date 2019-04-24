@@ -1,8 +1,8 @@
-import { ArraySeq } from '../crdt/sequence/ArraySeq';
-import { Op, InsertOp, RemoveOp } from '../crdt/sequence/op/Op';
+import { RGASeq } from '../crdt/sequence/rga/RGASeq';
+import { Op, InsertOp, RemoveOp } from '../crdt/sequence/rga/op/Op';
 
 export interface TextOp {
-  applyTo(textSeq: ArraySeq<string>): Op;
+  applyTo(textSeq: RGASeq<string>): Op;
 }
 
 export class Insert implements TextOp {
@@ -14,7 +14,7 @@ export class Insert implements TextOp {
     this.position = position;
   }
 
-  applyTo(textSeq: ArraySeq<string>): InsertOp<string> {
+  applyTo(textSeq: RGASeq<string>): InsertOp<string> {
     return textSeq.insert(this.value, this.position);
   }
 }
@@ -26,7 +26,7 @@ export class Remove implements TextOp {
     this.position = position;
   }
 
-  applyTo(textSeq: ArraySeq<string>): RemoveOp {
+  applyTo(textSeq: RGASeq<string>): RemoveOp {
     return textSeq.remove(this.position);
   }
 }
