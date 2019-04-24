@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { fabric } from 'fabric';
 import { view } from 'react-easy-state';
-import { ArraySeq } from '../crdt/sequence/ArraySeq';
 
 interface Props {}
 
@@ -28,18 +27,6 @@ class Canvas extends React.Component<Props, {}> {
     canvas.setHeight(400);
 
     this.canvas = canvas;
-
-    // let alice = new Seq<string>('alice');
-    // let bob = new Seq<string>('bob');
-    // let op1 = alice.insert('h', 0);
-    // let op2 = alice.insert('i', 1);
-    // // Note that these operations may be applied out of order.
-    // bob.apply(op2);
-    // bob.apply(op1);
-    // console.log(bob.get(0));
-    // console.log(bob.get(1));
-    // console.log(alice.toArray());
-    // console.log(bob.toArray());
   }
 
   render() {
