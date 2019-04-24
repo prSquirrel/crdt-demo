@@ -62,6 +62,11 @@ export abstract class RGANode<T> implements Comparable {
       }
     }
   }
+
+  hide(): void {
+    this.hidden = true;
+    delete this.element;
+  }
 }
 
 export class RGABranchNode<T> extends RGANode<T> {

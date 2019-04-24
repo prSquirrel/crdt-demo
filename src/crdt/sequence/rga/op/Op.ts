@@ -35,10 +35,10 @@ export class InsertOp<T> extends Op {
 }
 
 export class RemoveOp extends Op {
-  readonly timestamp: Timestamp;
+  readonly timestampToRemove: Timestamp;
 
   constructor(timestampToRemove: Timestamp) {
     super(OpKind.Remove);
-    this.timestamp = timestampToRemove;
+    this.timestampToRemove = timestampToRemove;
   }
 }

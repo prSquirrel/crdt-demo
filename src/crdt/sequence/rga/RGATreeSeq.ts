@@ -34,11 +34,12 @@ export class RGATreeSeq<T> {
   }
 
   remove(position: number): RemoveOp {
-    // find timestamp corresponding to position of tree traversal
-    // create remove operation with that timestamp
-    // apply it locally
-    // return it
-    throw new Error(`Not implemented`);
+    //TODO: bounds check
+    const nodeToRemove = this.get(position);
+
+    const op = new RemoveOp(nodeToRemove.timestamp);
+    this.applyRemove(op);
+    return op;
   }
 
   // TODO: this is O(N) now, use weight-balanced tree later
@@ -84,6 +85,9 @@ export class RGATreeSeq<T> {
   }
 
   private applyRemove(remove: RemoveOp): void {
-    throw new Error(`Not implemented`);
+    const idStr = remove.timestampToRemove.toIdString();
+    const nodeToRemove = this.cache.get(idStr);
+    nodeToRemove.hide();
+    this.cache.delete(idStr);
   }
 }
