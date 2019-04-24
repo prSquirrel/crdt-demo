@@ -65,7 +65,7 @@ export abstract class RGANode<T> implements Comparable {
 
   hide(): void {
     this.hidden = true;
-    delete this.element;
+    this.element = undefined;
   }
 }
 
