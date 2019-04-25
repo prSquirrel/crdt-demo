@@ -38,6 +38,41 @@ test('groups characters from same session together after concurrent editing', ()
   expect(asStr(user1)).toEqual('Hello dear reader Alice!');
 });
 
+test('insert and remove characters', () => {
+  const seq = new RGATreeSeq('alice');
+  expect(asStr(seq)).toEqual('');
+
+  seq.insert('A', 0);
+  expect(asStr(seq)).toEqual('A');
+
+  seq.insert('B', 1);
+  expect(asStr(seq)).toEqual('AB');
+
+  seq.insert('C', 2);
+  expect(asStr(seq)).toEqual('ABC');
+
+  seq.insert('X', 0);
+  expect(asStr(seq)).toEqual('XABC');
+
+  seq.insert('Z', 4);
+  expect(asStr(seq)).toEqual('XABCZ');
+
+  seq.remove(0);
+  expect(asStr(seq)).toEqual('ABCZ');
+
+  seq.remove(0);
+  expect(asStr(seq)).toEqual('BCZ');
+
+  seq.remove(1);
+  expect(asStr(seq)).toEqual('BZ');
+
+  seq.remove(1);
+  expect(asStr(seq)).toEqual('B');
+
+  seq.remove(0);
+  expect(asStr(seq)).toEqual('');
+});
+
 test('perform 5k consecutive inserts', () => {
   const seq = new RGATreeSeq('wxr8GMi4qRscDwiyAABW');
   Array.from({ length: 5000 }, (_, i) => seq.insert('X', i));
