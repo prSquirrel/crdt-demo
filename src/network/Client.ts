@@ -1,13 +1,36 @@
 /* eslint-disable no-use-before-define */
 
 import io from 'socket.io-client';
-// import Peer from 'simple-peer';
+// import { SimplePeer, Instance } from 'simple-peer';
 import SimpleSignalClient from 'simple-signal-client';
 import EventEmitter from 'nanobus';
+import * as capnp from 'capnp-ts';
+import { Buffer } from 'buffer/'; // note: the trailing slash is important!
 
-class Client extends EventEmitter {
+export enum ClientEvents {
+  ID_ASSIGNED = 'id_assigned',
+  DATA = 'data',
+  CLOSE = 'close',
+  ERROR = 'error',
+  CONNECT = 'connect',
+  SYNC_REQUESTED = 'sync_requested'
+}
+
+export interface Client extends EventEmitter {
+  connect(): void;
+  broadcastToConnectedPeers(data: capnp.Message): void;
+  id(): string;
+}
+
+export interface PeerSyncContext {
+  sync(msg: capnp.Message): void;
+}
+
+class DefaultClient extends EventEmitter implements Client {
   private socket: SocketIOClient.Socket;
   private signalClient: SimpleSignalClient;
+
+  private syncPeer?: any;
 
   constructor() {
     super();
@@ -18,7 +41,7 @@ class Client extends EventEmitter {
     });
 
     this.socket.on('connect', () => {
-      this.emit('id_assigned', this.id());
+      this.emit(ClientEvents.ID_ASSIGNED, this.id());
     });
 
     if (!this.socket) {
@@ -30,67 +53,91 @@ class Client extends EventEmitter {
     this.signalClient = new SimpleSignalClient(this.socket); // Uses an existing socket.io-client instance
 
     const registerPeerHandlers = (peer: any) => {
-      peer.on('data', (payload: string) => {
-        const data = JSON.parse(payload);
-        console.log(`RCVD data ${data}`);
-        this.emit('data', data);
+      peer.on('data', (data: ArrayBuffer) => {
+        const msg = new capnp.Message(data);
+        // console.log(msg.dump());
+        this.emit(ClientEvents.DATA, msg);
       });
       peer.on('close', () => {
         console.debug(`Closed channel`);
-        this.emit('close');
+        this.emit(ClientEvents.CLOSE);
       });
       peer.on('error', (err: string) => {
         console.log(`Channel error: ${err}`);
-        this.emit('error', err);
+        this.emit(ClientEvents.ERROR, err);
       });
       peer.on('connect', () => {
         console.log('Connected');
-        this.emit('connect');
+        this.emit(ClientEvents.CONNECT);
       });
     };
 
     this.signalClient.on('discover', async (allIds: string[]) => {
       console.debug(`All ids: ${JSON.stringify(allIds)}`);
 
-      const peerOptions = {};
+      const peerOptions = {
+        objectMode: false
+      };
       const nonLocalIds = allIds.filter(id => id !== this.id());
-      const connections = nonLocalIds.map(id =>
-        this.signalClient.connect(id, {}, peerOptions).then(({ peer, metadata }: any) => {
-          registerPeerHandlers(peer);
-        })
-      );
+      const peerIdToSyncWith = nonLocalIds[(Math.random() * nonLocalIds.length) | 0];
+      const connections = nonLocalIds.map(id => {
+        const metadata = {
+          sync: id == peerIdToSyncWith
+        };
+        const connection = this.signalClient
+          .connect(id, metadata, peerOptions)
+          .then(({ peer, metadata }: any) => {
+            registerPeerHandlers(peer);
+          });
+        return connection;
+      });
       return Promise.all(connections); // (initiator side)
     });
 
+    const emitSyncRequest = (peer: any) => {
+      const sendMessage = (msg: capnp.Message) => this.sendMessage(peer, msg);
+      const context = <PeerSyncContext>{
+        sync(msg: capnp.Message): void {
+          sendMessage(msg);
+        }
+      };
+      this.emit(ClientEvents.SYNC_REQUESTED, context);
+    };
+
     this.signalClient.on('request', async (request: any) => {
-      const { peer } = await request.accept(); // Accept the incoming request
+      const { peer, metadata } = await request.accept(); // Accept the incoming request
       console.log(`Accepted ${JSON.stringify(peer)}`);
+      console.log(`Meta: ${JSON.stringify(metadata)}`);
       registerPeerHandlers(peer);
+      if (metadata.sync) {
+        emitSyncRequest(peer);
+      }
       return peer; // this is a fully-signaled simple-peer object (non-initiator side)
     });
   }
 
-  connect() {
+  connect(): void {
     this.signalClient.discover({});
   }
 
-  broadcastToConnectedPeers(data: any) {
-    const peers = this.signalClient.peers();
-    // console.log(JSON.stringify(peers));
-    peers.forEach((peer: any) => {
-      this.sendMessage(peer, data);
-    });
+  broadcastToConnectedPeers(data: capnp.Message): void {
+    const peers = this.peers();
+    peers.forEach((peer: any) => this.sendMessage(peer, data));
   }
 
-  private sendMessage(peer: any, data: any) {
-    const payload = data;
-    console.log(`Broadcasting ${payload}`);
-    peer.send(JSON.stringify(payload));
+  private sendMessage(peer: any, msg: capnp.Message) {
+    const data: ArrayBuffer = msg.toPackedArrayBuffer();
+    peer.write(Buffer.from(data));
   }
 
-  id() {
+  id(): string {
     return this.socket.id;
+  }
+
+  private peers(): any[] {
+    const peers = this.signalClient.peers();
+    return peers;
   }
 }
 
-export const client = new Client();
+export const client = new DefaultClient();

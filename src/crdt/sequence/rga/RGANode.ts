@@ -1,12 +1,14 @@
 import { Timestamp } from './Timestamp';
 import { ValueSet } from '../../../util/ValueSet';
 import { Comparable } from '../../../util/Comparable';
+import Deque from 'double-ended-queue';
 
 export abstract class RGANode<T> implements Comparable {
   readonly isParent: boolean;
   hidden: boolean;
   readonly timestamp: Timestamp;
   readonly happenedBefore: ValueSet<Timestamp>;
+  readonly parent?: RGANode<T>;
   element?: T;
 
   abstract readonly childrenAsc: RGANode<T>[];
@@ -17,13 +19,15 @@ export abstract class RGANode<T> implements Comparable {
     hidden: boolean,
     timestamp: Timestamp,
     happenedBefore: ValueSet<Timestamp>,
-    element?: T
+    element?: T,
+    parent?: RGANode<T>
   ) {
     this.isParent = isParent;
     this.hidden = hidden;
     this.timestamp = timestamp;
     this.happenedBefore = happenedBefore;
     this.element = element;
+    this.parent = parent;
   }
 
   get isLeaf(): boolean {
@@ -31,17 +35,29 @@ export abstract class RGANode<T> implements Comparable {
   }
 
   walkPreOrder(visit: (node: RGANode<T>) => void): void {
-    const stack: RGANode<T>[] = [this];
+    const queue: Deque<RGANode<T>> = new Deque();
+    queue.push(this);
 
-    while (stack.length != 0) {
-      const node = stack.pop();
-      if (!node.hidden) {
-        visit(node);
-      }
+    while (!queue.isEmpty()) {
+      const node = queue.pop();
+      if (!node.isParent) visit(node);
       // since children are sorted by ascending timestamp
       // it will conveniently reverse them, resulting in correct order
       node.childrenAsc.forEach(sibling => {
-        stack.push(sibling);
+        queue.push(sibling);
+      });
+    }
+  }
+
+  walkBreadthFirst(visit: (node: RGANode<T>) => void): void {
+    const queue: Deque<RGANode<T>> = new Deque();
+    queue.push(this);
+
+    while (!queue.isEmpty()) {
+      const node = queue.shift();
+      if (!node.isParent) visit(node);
+      node.childrenAsc.forEach(sibling => {
+        queue.push(sibling);
       });
     }
   }
@@ -65,15 +81,22 @@ export abstract class RGANode<T> implements Comparable {
 
   hide(): void {
     this.hidden = true;
-    this.element = undefined;
+    // FIXME: freeing up hidden element would be possible once
+    // "dummy" insert operations (without value) / immediately-deleted operations are supported
+    //  this.element = undefined;
   }
 }
 
 export class RGABranchNode<T> extends RGANode<T> {
   readonly childrenAsc: RGABranchNode<T>[];
 
-  constructor(element: T, timestamp: Timestamp, happenedBefore: ValueSet<Timestamp>) {
-    super(false, false, timestamp, happenedBefore, element);
+  constructor(
+    element: T,
+    timestamp: Timestamp,
+    happenedBefore: ValueSet<Timestamp>,
+    parent: RGANode<T>
+  ) {
+    super(false, false, timestamp, happenedBefore, element, parent);
     this.childrenAsc = [];
   }
 

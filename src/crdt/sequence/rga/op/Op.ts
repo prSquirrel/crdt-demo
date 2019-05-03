@@ -6,7 +6,7 @@ export enum OpKind {
   Remove = 2
 }
 
-export abstract class Op {
+export abstract class Op<T> {
   readonly kind: OpKind;
 
   constructor(kind: OpKind) {
@@ -14,7 +14,7 @@ export abstract class Op {
   }
 }
 
-export class InsertOp<T> extends Op {
+export class InsertOp<T> extends Op<T> {
   readonly value: T;
   readonly timestamp: Timestamp;
   readonly happenedBefore: ValueSet<Timestamp>;
@@ -34,7 +34,7 @@ export class InsertOp<T> extends Op {
   }
 }
 
-export class RemoveOp extends Op {
+export class RemoveOp<T> extends Op<T> {
   readonly timestampToRemove: Timestamp;
 
   constructor(timestampToRemove: Timestamp) {

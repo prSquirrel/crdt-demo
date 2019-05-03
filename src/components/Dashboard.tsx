@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
-import { view } from 'react-easy-state';
-import clientStore from '../network/clientStore';
+import { store, view } from 'react-easy-state';
+import { client } from '../network/Client';
+
+const dashboardStore = store({
+  clientId: '...'
+});
 
 class Dashboard extends Component {
   static propTypes = {};
@@ -9,14 +13,18 @@ class Dashboard extends Component {
     super(props);
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    client.on('id_assigned', id => {
+      dashboardStore.clientId = id;
+    });
+  }
 
   render() {
     return (
       <div>
         <div>
           Id:
-          {clientStore.id}
+          {dashboardStore.clientId}
         </div>
       </div>
     );

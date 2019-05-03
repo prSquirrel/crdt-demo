@@ -1,4 +1,4 @@
-const { diff, Insert, Remove } = require('./Combobulator');
+const { diff, Insert, Remove } = require('./Diff');
 
 test('insert single character at caret position (beginning of string)', () => {
   //| -> A|

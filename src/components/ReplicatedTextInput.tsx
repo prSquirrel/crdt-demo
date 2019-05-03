@@ -2,8 +2,9 @@ import * as React from 'react';
 import { view, store } from 'react-easy-state';
 import { RGASeq } from '../crdt/sequence/rga/RGASeq';
 import { RGATreeSeq } from '../crdt/sequence/rga/RGATreeSeq';
-import { diff, TextOp } from '../util/Combobulator';
-import clientStore from '../network/clientStore';
+import { diff, TextOp } from '../util/Diff';
+import { client, ClientEvents, PeerSyncContext } from '../network/Client';
+import { mailbox, MailboxEvents } from '../network/Mailbox';
 import { Op } from '../crdt/sequence/rga/op/Op';
 
 interface Props {}
@@ -26,12 +27,29 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
   }
 
   componentDidMount() {
-    clientStore.onIdAssigned(id => {
+    client.on(ClientEvents.ID_ASSIGNED, id => {
       this.textSeq = new RGATreeSeq<string>(id);
+      console.log('ID_ASSIGNED');
 
       // console.log(`Inserting 1000 characters @ ${new Date()}`);
       // Array.from({ length: 1000 }, (_, i) => textStore.seq.insert('X', i));
       // console.log(`Finished @ ${new Date()}`);
+    });
+    mailbox.on(MailboxEvents.OP_RECEIVED, (op: Op<string>) => {
+      console.log(op);
+      this.applyRemoteOp(op);
+      this.updateContent();
+    });
+
+    client.on(ClientEvents.SYNC_REQUESTED, (ctx: PeerSyncContext) => {
+      const history = this.textSeq.getHistory();
+      console.log(`SYNC_REQUESTED`);
+      mailbox.sync(ctx, history);
+    });
+    mailbox.on(MailboxEvents.SYNC_RECEIVED, (ops: Op<string>[]) => {
+      console.log(`SYNC_RECEIVED`);
+      ops.forEach(op => this.applyRemoteOp(op));
+      this.updateContent();
     });
   }
 
@@ -48,18 +66,27 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
       this.textAreaStore.selection.end
     );
 
-    console.log(JSON.stringify(ops));
-    const opsToReplicate = this.applyOps(ops);
+    // console.log(JSON.stringify(ops));
+    const opsToReplicate = this.applyTextOps(ops);
     this.updateContent();
-    console.log(JSON.stringify(opsToReplicate));
+    // console.log(JSON.stringify(opsToReplicate));
+    opsToReplicate.forEach(op => {
+      mailbox.broadcast(op);
+    });
   };
 
-  private applyOps(ops: TextOp[]): Op[] {
+  private applyTextOps(textOps: TextOp[]): Op<string>[] {
     if (this.textSeq) {
-      const opsToReplicate = ops.map(op => op.applyTo(this.textSeq));
+      const opsToReplicate = textOps.map(op => op.applyTo(this.textSeq));
       return opsToReplicate;
     } else {
       return [];
+    }
+  }
+
+  private applyRemoteOp(op: Op<string>): void {
+    if (this.textSeq) {
+      this.textSeq.apply(op);
     }
   }
 
@@ -84,6 +111,8 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
         onSelect={this.onSelect}
         onChange={this.onChange}
         spellCheck={false}
+        rows={40}
+        cols={150}
       />
     );
   }

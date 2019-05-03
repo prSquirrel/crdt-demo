@@ -13,7 +13,11 @@ module.exports = {
   devtool: 'source-map',
   module: {
     rules: [
-      { test: /\.tsx?$/, loader: 'awesome-typescript-loader' },
+      {
+        test: /\.tsx?$/,
+        loader: 'awesome-typescript-loader',
+        exclude: /(node_modules|bower_components)/
+      },
       { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
       {
         test: /\.(js|jsx)$/,
@@ -35,7 +39,7 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['*', '.js', '.jsx', '.ts', '.tsx', '.json', '.css']
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.css']
   },
   output: {
     filename: 'App.js',

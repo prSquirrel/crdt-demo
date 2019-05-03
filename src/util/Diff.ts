@@ -2,7 +2,7 @@ import { RGASeq } from '../crdt/sequence/rga/RGASeq';
 import { Op, InsertOp, RemoveOp } from '../crdt/sequence/rga/op/Op';
 
 export interface TextOp {
-  applyTo(textSeq: RGASeq<string>): Op;
+  applyTo(textSeq: RGASeq<string>): Op<string>;
 }
 
 export class Insert implements TextOp {
@@ -26,7 +26,7 @@ export class Remove implements TextOp {
     this.position = position;
   }
 
-  applyTo(textSeq: RGASeq<string>): RemoveOp {
+  applyTo(textSeq: RGASeq<string>): RemoveOp<string> {
     return textSeq.remove(this.position);
   }
 }

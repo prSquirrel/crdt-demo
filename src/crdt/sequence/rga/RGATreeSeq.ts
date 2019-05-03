@@ -34,7 +34,7 @@ export class RGATreeSeq<T> implements RGASeq<T> {
     return op;
   }
 
-  remove(position: number): RemoveOp {
+  remove(position: number): RemoveOp<T> {
     //TODO: bounds check
     const nodeToRemove = this.get(position);
 
@@ -53,7 +53,9 @@ export class RGATreeSeq<T> implements RGASeq<T> {
   toPreOrderArray(): RGANode<T>[] {
     const elements: RGANode<T>[] = [];
     if (this.root) {
-      this.root.walkPreOrder(node => elements.push(node));
+      this.root.walkPreOrder(node => {
+        if (!node.hidden) elements.push(node);
+      });
     }
     return elements;
   }
@@ -62,14 +64,37 @@ export class RGATreeSeq<T> implements RGASeq<T> {
     return this.toPreOrderArray().map(node => node.element);
   }
 
-  apply(op: Op): void {
+  //TODO: this could use special tombstone operation. Tombstone = Insert+Remove
+  getHistory(): Op<T>[] {
+    const insertHistory: InsertOp<T>[] = [];
+    const removeHistory: RemoveOp<T>[] = [];
+
+    if (this.root) {
+      this.root.walkBreadthFirst(node => {
+        const insert = new InsertOp<T>(
+          node.element,
+          node.timestamp,
+          node.happenedBefore,
+          node.parent.timestamp
+        );
+        insertHistory.push(insert);
+        if (node.hidden) {
+          const remove = new RemoveOp<T>(node.timestamp);
+          removeHistory.push(remove);
+        }
+      });
+    }
+    return [...insertHistory, ...removeHistory];
+  }
+
+  apply(op: Op<T>): void {
     switch (op.kind) {
       case OpKind.Insert:
         this.applyInsert(<InsertOp<T>>op);
         break;
 
       case OpKind.Remove:
-        this.applyRemove(<RemoveOp>op);
+        this.applyRemove(<RemoveOp<T>>op);
         break;
 
       default:
@@ -79,15 +104,23 @@ export class RGATreeSeq<T> implements RGASeq<T> {
 
   private applyInsert(insert: InsertOp<T>): void {
     const referenceNode = this.cache.get(insert.referenceTimestamp.toIdString());
-    const newNode = new RGABranchNode<T>(insert.value, insert.timestamp, insert.happenedBefore);
+    const newNode = new RGABranchNode<T>(
+      insert.value,
+      insert.timestamp,
+      insert.happenedBefore,
+      referenceNode
+    );
     referenceNode.addSibling(newNode);
     this.cache.set(newNode.timestamp.toIdString(), newNode);
   }
 
-  private applyRemove(remove: RemoveOp): void {
+  private applyRemove(remove: RemoveOp<T>): void {
     const idStr = remove.timestampToRemove.toIdString();
     const nodeToRemove = this.cache.get(idStr);
     nodeToRemove.hide();
-    this.cache.delete(idStr);
+    // TODO: Is it worth deleting hidden nodes from cache, and performing expensive search
+    //       in an event somebody inserts a character
+    //       after the node was removed from cache?
+    // this.cache.delete(idStr);
   }
 }
