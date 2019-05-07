@@ -35,7 +35,7 @@ class DefaultClient extends EventEmitter implements Client {
   constructor() {
     super();
 
-    this.socket = io.connect('https://localhost:8443', {
+    this.socket = io.connect(`https://${document.domain}:8443`, {
       timeout: 10000,
       forceNew: true
     });
