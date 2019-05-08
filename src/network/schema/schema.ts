@@ -121,8 +121,8 @@ export class SyncMessage extends __S {
     setOperations(value: capnp.List<Operation>): void { __S.copyFrom(value, __S.getPointer(0, this)); }
     getBatchNumber(): number { return __S.getUint32(0, this); }
     setBatchNumber(value: number): void { __S.setUint32(0, value, this); }
-    getTotalBatches(): number { return __S.getUint32(4, this); }
-    setTotalBatches(value: number): void { __S.setUint32(4, value, this); }
+    getLastBatchNumber(): number { return __S.getUint32(4, this); }
+    setLastBatchNumber(value: number): void { __S.setUint32(4, value, this); }
     toString(): string { return "SyncMessage_" + super.toString(); }
 }
 export class Operation_Insert extends __S {

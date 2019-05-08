@@ -1,7 +1,7 @@
 import FastPriorityQueue from 'fastpriorityqueue';
 import { VClock } from './VClock';
 import { client, Client, ClientEvents, PeerSyncContext } from './Client';
-import { Message, Operation, Operation_Timestamp } from './schema/schema';
+import { Message, Operation, Operation_Timestamp, SyncMessage } from './schema/schema';
 import EventEmitter from 'nanobus';
 import * as capnp from 'capnp-ts';
 import { Op, OpKind, InsertOp, RemoveOp } from '../crdt/sequence/rga/op/Op';
@@ -52,29 +52,50 @@ class Mailbox extends EventEmitter {
   }
 
   sync(context: PeerSyncContext, history: Op<string>[]): void {
-    history.forEach(op => {
-      const capnpMsg = new capnp.Message();
-      const msg = capnpMsg.initRoot(Message);
+    const BATCH_SIZE = 1000;
+    const totalItems = history.length;
+    const remainingBatchSize = totalItems % BATCH_SIZE;
+    const totalFullBatches = (totalItems - remainingBatchSize) / BATCH_SIZE;
+    const lastBatchNumber = remainingBatchSize == 0 ? totalFullBatches - 1 : totalFullBatches;
 
-      const opMsg = msg.initOperation();
-      opMsg.initVclock(); // TODO
-      const opStruct = opMsg.getOperation();
-      this.serializeOpToStruct(op, opStruct);
+    let batchNumber = 0;
+    for (let start = 0; start < totalItems; start += BATCH_SIZE, batchNumber++) {
+      const batch = history.slice(start, start + BATCH_SIZE);
+      this.syncBatch(context, batch, batchNumber, lastBatchNumber);
+    }
+  }
 
-      context.sync(capnpMsg);
-    });
+  private syncBatch(
+    context: PeerSyncContext,
+    batch: Op<string>[],
+    batchNumber: number,
+    lastBatchNumber: number
+  ): void {
+    console.log(`Sending batch ${batchNumber}. Last batch is ${lastBatchNumber}`);
+    console.log(batch);
 
-    // const capnpMsg = new capnp.Message();
-    // const msg = capnpMsg.initRoot(Message);
+    const capnpMsg = new capnp.Message();
+    const msg = capnpMsg.initRoot(Message);
 
-    // const syncMsg = msg.initSync();
-    // const operations = syncMsg.initOperations(history.length);
-    // for (let i = 0; i < history.length; i++) {
-    //   const operation = operations.get(i);
-    //   this.serializeOpToStruct(history[i], operation);
-    // }
+    const syncMsg = msg.initSync();
+    this.serializeBatchToStruct(batch, batchNumber, lastBatchNumber, syncMsg);
 
-    // context.sync(capnpMsg);
+    context.sync(capnpMsg);
+  }
+
+  private serializeBatchToStruct(
+    batch: Op<string>[],
+    batchNumber: number,
+    lastBatchNumber: number,
+    syncMsg: SyncMessage
+  ): void {
+    syncMsg.setBatchNumber(batchNumber);
+    syncMsg.setLastBatchNumber(lastBatchNumber);
+    const operations = syncMsg.initOperations(batch.length);
+    for (let i = 0; i < batch.length; i++) {
+      const operation = operations.get(i);
+      this.serializeOpToStruct(batch[i], operation);
+    }
   }
 
   private serializeOpToStruct(op: Op<string>, opStruct: Operation): void {
@@ -129,8 +150,8 @@ class Mailbox extends EventEmitter {
         break;
 
       case Message.SYNC:
-        console.log(capnpMsg.dump());
         const syncMsg = msg.getSync();
+        console.log(`Syncing batch ${syncMsg.getBatchNumber()}/${syncMsg.getLastBatchNumber()}`);
         const operations = syncMsg.getOperations();
 
         const ops = operations.map(operation => this.deserializeOp(operation));

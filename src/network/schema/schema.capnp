@@ -29,7 +29,7 @@ struct OperationMessage {
 struct SyncMessage {
   operations @0 :List(Operation);
   batchNumber @1 :UInt32;
-  totalBatches @2 :UInt32;
+  lastBatchNumber @2 :UInt32;
 }
 
 struct Operation {
