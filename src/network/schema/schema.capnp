@@ -20,7 +20,7 @@ struct OperationMessage {
       entries @0 :List(Entry);
       struct Entry {
         site @0 :Text;
-        clock @1 :Float64;
+        clock @1 :UInt32;
       }
     }
   }
@@ -28,6 +28,8 @@ struct OperationMessage {
 
 struct SyncMessage {
   operations @0 :List(Operation);
+  batchNumber @1 :UInt32;
+  totalBatches @2 :UInt32;
 }
 
 struct Operation {
@@ -50,6 +52,6 @@ struct Operation {
 
   struct Timestamp {
     site @0 :Text;
-    clock @1 :Float64;
+    clock @1 :UInt32;
   }
 }

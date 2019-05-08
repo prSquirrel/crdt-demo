@@ -64,8 +64,8 @@ export class OperationMessage_VectorClock_ClockMap_Entry extends __S {
     static readonly _capnp = { displayName: "Entry", id: "83e7551f3728e4fd", size: new __O(8, 1) };
     getSite(): string { return __S.getText(0, this); }
     setSite(value: string): void { __S.setText(0, value, this); }
-    getClock(): number { return __S.getFloat64(0, this); }
-    setClock(value: number): void { __S.setFloat64(0, value, this); }
+    getClock(): number { return __S.getUint32(0, this); }
+    setClock(value: number): void { __S.setUint32(0, value, this); }
     toString(): string { return "OperationMessage_VectorClock_ClockMap_Entry_" + super.toString(); }
 }
 export class OperationMessage_VectorClock_ClockMap extends __S {
@@ -111,7 +111,7 @@ export class OperationMessage extends __S {
     toString(): string { return "OperationMessage_" + super.toString(); }
 }
 export class SyncMessage extends __S {
-    static readonly _capnp = { displayName: "SyncMessage", id: "c37b45db023837ce", size: new __O(0, 1) };
+    static readonly _capnp = { displayName: "SyncMessage", id: "c37b45db023837ce", size: new __O(8, 1) };
     static _Operations: capnp.ListCtor<Operation>;
     adoptOperations(value: capnp.Orphan<capnp.List<Operation>>): void { __S.adopt(value, __S.getPointer(0, this)); }
     disownOperations(): capnp.Orphan<capnp.List<Operation>> { return __S.disown(this.getOperations()); }
@@ -119,6 +119,10 @@ export class SyncMessage extends __S {
     hasOperations(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
     initOperations(length: number): capnp.List<Operation> { return __S.initList(0, SyncMessage._Operations, length, this); }
     setOperations(value: capnp.List<Operation>): void { __S.copyFrom(value, __S.getPointer(0, this)); }
+    getBatchNumber(): number { return __S.getUint32(0, this); }
+    setBatchNumber(value: number): void { __S.setUint32(0, value, this); }
+    getTotalBatches(): number { return __S.getUint32(4, this); }
+    setTotalBatches(value: number): void { __S.setUint32(4, value, this); }
     toString(): string { return "SyncMessage_" + super.toString(); }
 }
 export class Operation_Insert extends __S {
@@ -160,8 +164,8 @@ export class Operation_Timestamp extends __S {
     static readonly _capnp = { displayName: "Timestamp", id: "dce459e12f4c7d66", size: new __O(8, 1) };
     getSite(): string { return __S.getText(0, this); }
     setSite(value: string): void { __S.setText(0, value, this); }
-    getClock(): number { return __S.getFloat64(0, this); }
-    setClock(value: number): void { __S.setFloat64(0, value, this); }
+    getClock(): number { return __S.getUint32(0, this); }
+    setClock(value: number): void { __S.setUint32(0, value, this); }
     toString(): string { return "Operation_Timestamp_" + super.toString(); }
 }
 export enum Operation_Which {
