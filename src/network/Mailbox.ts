@@ -1,5 +1,5 @@
 import { client, Client, ClientEvents, PeerSyncContext } from './Client';
-import { Message, Operation, Operation_Timestamp, SyncMessage } from './schema/schema';
+import { Message, Operation, Operation_Timestamp, SyncMessage } from '../schema/schema';
 import EventEmitter from 'nanobus';
 import * as capnp from 'capnp-ts';
 import { Op, OpKind, InsertOp, RemoveOp } from '../crdt/sequence/rga/op/Op';

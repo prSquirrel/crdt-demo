@@ -10,7 +10,7 @@
     "build-watch": "webpack --config webpack.config.js --watch",
     "server": "node server.js",
     "gen": "npm run generate-sources",
-    "generate-sources": "capnpc -o ts src/network/schema/*.capnp && rename -f 'src/network/schema/*.capnp.ts' '{{f|replace|.capnp|}}'"
+    "generate-sources": "capnpc -o ts src/schema/*.capnp && rename -f 'src/schema/*.capnp.ts' '{{f|replace|.capnp|}}'"
   },
   "author": "Aleksej Kazmin",
   "license": "MIT",
