@@ -4,7 +4,7 @@ import Dashboard from './components/Dashboard';
 // import Canvas from './Canvas';
 import ReplicatedTextInput from './components/ReplicatedTextInput';
 import * as capnp from 'capnp-ts';
-import { Operation } from './schema/schema';
+import { Operation } from './network/schema/schema';
 import { Timestamp } from './crdt/sequence/rga/Timestamp';
 import { client } from './network/Client';
 import { mailbox, MailboxEvents } from './network/Mailbox';
