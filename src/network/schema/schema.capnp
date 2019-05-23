@@ -14,7 +14,7 @@ struct OperationMessage {
 
   struct VectorClock {
     site @0 :Text;
-    siteClock @1 :ClockMap;
+    clockMap @1 :ClockMap;
 
     struct ClockMap {
       entries @0 :List(Entry);

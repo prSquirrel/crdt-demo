@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { store, view } from 'react-easy-state';
-import { client } from '../network/Client';
+import { client } from '../network/DefaultClient';
 
 const dashboardStore = store({
   clientId: '...'

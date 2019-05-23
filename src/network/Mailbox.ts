@@ -1,26 +1,51 @@
-import { client, Client, ClientEvents, PeerSyncContext } from './Client';
-import { Message, Operation, Operation_Timestamp, SyncMessage } from './schema/schema';
+import FastPriorityQueue from 'fastpriorityqueue';
+import { Client, ClientEvents, PeerSyncContext } from './Client';
+import {
+  Message,
+  Operation,
+  Operation_Timestamp,
+  SyncMessage,
+  OperationMessage,
+  OperationMessage_VectorClock
+} from './schema/schema';
 import EventEmitter from 'nanobus';
 import * as capnp from 'capnp-ts';
 import { Op, OpKind, InsertOp, RemoveOp } from '../crdt/sequence/rga/op/Op';
 import { Timestamp } from '../crdt/sequence/rga/Timestamp';
 import { ValueSet } from '../util/ValueSet';
+import { VClock } from './VClock';
+import { Compare } from '../util/Comparable';
 
 export enum MailboxEvents {
   OP_RECEIVED = 'operation_received',
   SYNC_RECEIVED = 'sync_received'
 }
 
+interface RemoteOp {
+  vclock: VClock;
+  op: Op<string>;
+}
+
 //TODO: flag of ready
 export class Mailbox extends EventEmitter {
   private client: Client;
 
-  constructor(client: Client) {
+  private readonly site: string;
+  private vclock: VClock;
+  private queue: FastPriorityQueue<RemoteOp>;
+
+  constructor(site: string, client: Client) {
     super();
     client.on(ClientEvents.DATA, (msg: capnp.Message) => {
       this.handle(msg);
     });
     this.client = client;
+    this.site = site;
+    this.vclock = VClock.create(site);
+    this.queue = new FastPriorityQueue((a, b) => {
+      const compare = a.vclock.compareTo(b.vclock);
+      return compare === Compare.LT;
+    });
   }
 
   broadcast(op: Op<string>): void {
@@ -126,11 +151,8 @@ export class Mailbox extends EventEmitter {
     const msg = capnpMsg.getRoot(Message);
     switch (msg.which()) {
       case Message.OPERATION:
-        const operationMsg = msg.getOperation();
-        const operation = operationMsg.getOperation();
-        const op = this.deserializeOp(operation);
-
-        this.emitOp(op);
+        this.enqueueOp(msg.getOperation());
+        this.deliverReadyOps();
         break;
 
       case Message.SYNC:
@@ -146,6 +168,53 @@ export class Mailbox extends EventEmitter {
       default:
         throw new Error(`Unknown message`);
     }
+  }
+
+  private enqueueOp(message: OperationMessage): void {
+    const vclockMsg = message.getVclock();
+    const remoteVclock = this.deserializeVclock(vclockMsg);
+
+    const operation = message.getOperation();
+    const op = this.deserializeOp(operation);
+
+    const remoteOp = <RemoteOp>{
+      vclock: remoteVclock,
+      op: op
+    };
+    this.queue.add(remoteOp);
+  }
+
+  private deliverReadyOps(): void {
+    const q = this.queue;
+
+    while (!q.isEmpty() && this.canBeDelivered(q.peek())) {
+      this.deliverOp(q.poll());
+    }
+  }
+
+  private deliverOp(remoteOp: RemoteOp): void {
+    this.emitOp(remoteOp.op);
+    this.vclock.merge(remoteOp.vclock);
+  }
+
+  private canBeDelivered(remoteOp: RemoteOp): boolean {
+    const remoteVclock = remoteOp.vclock;
+    const remoteSite = remoteVclock.site;
+    const first =
+      this.vclock.getClock(remoteSite) === Math.max(remoteVclock.getClock(remoteSite) - 1, 0);
+    const second = remoteVclock.allLessThanOrEqualExcept(remoteSite, this.vclock);
+    return first && second;
+  }
+
+  private deserializeVclock(struct: OperationMessage_VectorClock): VClock {
+    const remoteSite = struct.getSite();
+    const clockMap = new Map<string, number>();
+    const entries = struct.getClockMap().getEntries();
+    entries.forEach(entry => {
+      clockMap.set(entry.getSite(), entry.getClock());
+    });
+
+    return new VClock(remoteSite, clockMap);
   }
 
   private deserializeOp(operation: Operation): Op<string> {
@@ -190,5 +259,3 @@ export class Mailbox extends EventEmitter {
     this.emit(MailboxEvents.SYNC_RECEIVED, ops);
   }
 }
-
-export const mailbox = new Mailbox(client);

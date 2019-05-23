@@ -70,7 +70,7 @@ export class VClock implements IVClock {
     let allLessThanOrEqual = true;
     let lessThanExists = false;
 
-    const siteSet = new Set<string>([...this.siteClock.keys(), ...that.siteClock.keys()]);
+    const siteSet = VClock.keySet(this.siteClock, that.siteClock);
     siteSet.forEach(site => {
       const thisClock = this.getClockOrZero(site);
       const thatClock = that.getClockOrZero(site);
@@ -83,6 +83,27 @@ export class VClock implements IVClock {
     });
 
     return allLessThanOrEqual && lessThanExists;
+  }
+
+  allLessThanOrEqualExcept(exceptSite: string, that: VClock): boolean {
+    let allLessThanOrEqual = true;
+
+    const siteSet = VClock.keySet(this.siteClock, that.siteClock);
+    for (const site of siteSet) {
+      if (site !== exceptSite) {
+        const thisClock = this.getClockOrZero(site);
+        const thatClock = that.getClockOrZero(site);
+        if (thisClock > thatClock) {
+          allLessThanOrEqual = false;
+          break;
+        }
+      }
+    }
+    return allLessThanOrEqual;
+  }
+
+  static keySet<K, V>(thisMap: Map<K, V>, thatMap: Map<K, V>): Set<K> {
+    return new Set<K>([...thisMap.keys(), ...thatMap.keys()]);
   }
 
   concurrent(that: VClock): boolean {

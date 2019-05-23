@@ -85,12 +85,12 @@ export class OperationMessage_VectorClock extends __S {
     static readonly _capnp = { displayName: "VectorClock", id: "d5be410b2d64d619", size: new __O(0, 2) };
     getSite(): string { return __S.getText(0, this); }
     setSite(value: string): void { __S.setText(0, value, this); }
-    adoptSiteClock(value: capnp.Orphan<OperationMessage_VectorClock_ClockMap>): void { __S.adopt(value, __S.getPointer(1, this)); }
-    disownSiteClock(): capnp.Orphan<OperationMessage_VectorClock_ClockMap> { return __S.disown(this.getSiteClock()); }
-    getSiteClock(): OperationMessage_VectorClock_ClockMap { return __S.getStruct(1, OperationMessage_VectorClock_ClockMap, this); }
-    hasSiteClock(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
-    initSiteClock(): OperationMessage_VectorClock_ClockMap { return __S.initStructAt(1, OperationMessage_VectorClock_ClockMap, this); }
-    setSiteClock(value: OperationMessage_VectorClock_ClockMap): void { __S.copyFrom(value, __S.getPointer(1, this)); }
+    adoptClockMap(value: capnp.Orphan<OperationMessage_VectorClock_ClockMap>): void { __S.adopt(value, __S.getPointer(1, this)); }
+    disownClockMap(): capnp.Orphan<OperationMessage_VectorClock_ClockMap> { return __S.disown(this.getClockMap()); }
+    getClockMap(): OperationMessage_VectorClock_ClockMap { return __S.getStruct(1, OperationMessage_VectorClock_ClockMap, this); }
+    hasClockMap(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
+    initClockMap(): OperationMessage_VectorClock_ClockMap { return __S.initStructAt(1, OperationMessage_VectorClock_ClockMap, this); }
+    setClockMap(value: OperationMessage_VectorClock_ClockMap): void { __S.copyFrom(value, __S.getPointer(1, this)); }
     toString(): string { return "OperationMessage_VectorClock_" + super.toString(); }
 }
 export class OperationMessage extends __S {
