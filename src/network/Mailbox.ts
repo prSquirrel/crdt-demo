@@ -6,7 +6,7 @@ import {
   Operation_Timestamp,
   SyncMessage,
   OperationMessage,
-  OperationMessage_VectorClock
+  Message_VectorClock
 } from './schema/schema';
 import EventEmitter from 'nanobus';
 import * as capnp from 'capnp-ts';
@@ -52,9 +52,10 @@ export class Mailbox extends EventEmitter {
     const capnpMsg = new capnp.Message();
     const msg = capnpMsg.initRoot(Message);
 
-    const opMsg = msg.initOperation();
     this.vclock.increment();
-    this.serializeVClockToStruct(this.vclock, opMsg.initVclock());
+    this.serializeVClockToStruct(this.vclock, msg.initVclock());
+
+    const opMsg = msg.initOperation();
     const opStruct = opMsg.getOperation();
     this.serializeOpToStruct(op, opStruct);
 
@@ -108,10 +109,7 @@ export class Mailbox extends EventEmitter {
     }
   }
 
-  private serializeVClockToStruct(
-    vclock: VClock,
-    vclockStruct: OperationMessage_VectorClock
-  ): void {
+  private serializeVClockToStruct(vclock: VClock, vclockStruct: Message_VectorClock): void {
     vclockStruct.setSite(vclock.site);
 
     const clockMap = vclockStruct.initClockMap();
@@ -168,10 +166,12 @@ export class Mailbox extends EventEmitter {
 
   private handle(capnpMsg: capnp.Message): void {
     const msg = capnpMsg.getRoot(Message);
+    const remoteVclock = this.deserializeVclock(msg.getVclock());
     switch (msg.which()) {
       case Message.OPERATION:
-        this.enqueueOp(msg.getOperation());
+        this.enqueueOp(remoteVclock, msg.getOperation());
         this.deliverReadyOps();
+        console.log(`Message queue size: ${this.queue.size}`);
         break;
 
       case Message.SYNC:
@@ -189,10 +189,7 @@ export class Mailbox extends EventEmitter {
     }
   }
 
-  private enqueueOp(message: OperationMessage): void {
-    const vclockMsg = message.getVclock();
-    const remoteVclock = this.deserializeVclock(vclockMsg);
-
+  private enqueueOp(remoteVclock: VClock, message: OperationMessage): void {
     const operation = message.getOperation();
     const op = this.deserializeOp(operation);
 
@@ -227,7 +224,7 @@ export class Mailbox extends EventEmitter {
     return first && second;
   }
 
-  private deserializeVclock(struct: OperationMessage_VectorClock): VClock {
+  private deserializeVclock(struct: Message_VectorClock): VClock {
     const remoteSite = struct.getSite();
     const clockMap = new Map<string, number>();
     const entries = struct.getClockMap().getEntries();

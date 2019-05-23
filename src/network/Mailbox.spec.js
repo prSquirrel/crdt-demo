@@ -8,8 +8,7 @@ const removeOpMsg = (clock, sourceSite, vclockEntries) => {
   const capnpMsg = new capnp.Message();
   const msg = capnpMsg.initRoot(Message);
 
-  const opMsg = msg.initOperation();
-  const vclock = opMsg.initVclock();
+  const vclock = msg.initVclock();
 
   vclock.setSite(sourceSite);
 
@@ -24,6 +23,7 @@ const removeOpMsg = (clock, sourceSite, vclockEntries) => {
     idx++;
   }
 
+  const opMsg = msg.initOperation();
   const opStruct = opMsg.getOperation();
   opStruct.initRemove();
   const removeStruct = opStruct.getRemove();

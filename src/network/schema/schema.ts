@@ -7,6 +7,39 @@
 import * as capnp from "capnp-ts";
 import { ObjectSize as __O, Struct as __S } from 'capnp-ts';
 export const _capnpFileId = "8a288399e900f2b9";
+export class Message_VectorClock_ClockMap_Entry extends __S {
+    static readonly _capnp = { displayName: "Entry", id: "84593b2960db0c36", size: new __O(8, 1) };
+    getSite(): string { return __S.getText(0, this); }
+    setSite(value: string): void { __S.setText(0, value, this); }
+    getClock(): number { return __S.getUint32(0, this); }
+    setClock(value: number): void { __S.setUint32(0, value, this); }
+    toString(): string { return "Message_VectorClock_ClockMap_Entry_" + super.toString(); }
+}
+export class Message_VectorClock_ClockMap extends __S {
+    static readonly Entry = Message_VectorClock_ClockMap_Entry;
+    static readonly _capnp = { displayName: "ClockMap", id: "fff0c09b7164ddda", size: new __O(0, 1) };
+    static _Entries: capnp.ListCtor<Message_VectorClock_ClockMap_Entry>;
+    adoptEntries(value: capnp.Orphan<capnp.List<Message_VectorClock_ClockMap_Entry>>): void { __S.adopt(value, __S.getPointer(0, this)); }
+    disownEntries(): capnp.Orphan<capnp.List<Message_VectorClock_ClockMap_Entry>> { return __S.disown(this.getEntries()); }
+    getEntries(): capnp.List<Message_VectorClock_ClockMap_Entry> { return __S.getList(0, Message_VectorClock_ClockMap._Entries, this); }
+    hasEntries(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
+    initEntries(length: number): capnp.List<Message_VectorClock_ClockMap_Entry> { return __S.initList(0, Message_VectorClock_ClockMap._Entries, length, this); }
+    setEntries(value: capnp.List<Message_VectorClock_ClockMap_Entry>): void { __S.copyFrom(value, __S.getPointer(0, this)); }
+    toString(): string { return "Message_VectorClock_ClockMap_" + super.toString(); }
+}
+export class Message_VectorClock extends __S {
+    static readonly ClockMap = Message_VectorClock_ClockMap;
+    static readonly _capnp = { displayName: "VectorClock", id: "96a6168ced409c61", size: new __O(0, 2) };
+    getSite(): string { return __S.getText(0, this); }
+    setSite(value: string): void { __S.setText(0, value, this); }
+    adoptClockMap(value: capnp.Orphan<Message_VectorClock_ClockMap>): void { __S.adopt(value, __S.getPointer(1, this)); }
+    disownClockMap(): capnp.Orphan<Message_VectorClock_ClockMap> { return __S.disown(this.getClockMap()); }
+    getClockMap(): Message_VectorClock_ClockMap { return __S.getStruct(1, Message_VectorClock_ClockMap, this); }
+    hasClockMap(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
+    initClockMap(): Message_VectorClock_ClockMap { return __S.initStructAt(1, Message_VectorClock_ClockMap, this); }
+    setClockMap(value: Message_VectorClock_ClockMap): void { __S.copyFrom(value, __S.getPointer(1, this)); }
+    toString(): string { return "Message_VectorClock_" + super.toString(); }
+}
 export enum Message_Which {
     UNKNOWN = 0,
     OPERATION = 1,
@@ -16,98 +49,65 @@ export class Message extends __S {
     static readonly UNKNOWN = Message_Which.UNKNOWN;
     static readonly OPERATION = Message_Which.OPERATION;
     static readonly SYNC = Message_Which.SYNC;
-    static readonly _capnp = { displayName: "Message", id: "8c67f1447c9cab61", size: new __O(8, 1) };
+    static readonly VectorClock = Message_VectorClock;
+    static readonly _capnp = { displayName: "Message", id: "8c67f1447c9cab61", size: new __O(8, 2) };
+    adoptVclock(value: capnp.Orphan<Message_VectorClock>): void { __S.adopt(value, __S.getPointer(0, this)); }
+    disownVclock(): capnp.Orphan<Message_VectorClock> { return __S.disown(this.getVclock()); }
+    getVclock(): Message_VectorClock { return __S.getStruct(0, Message_VectorClock, this); }
+    hasVclock(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
+    initVclock(): Message_VectorClock { return __S.initStructAt(0, Message_VectorClock, this); }
+    setVclock(value: Message_VectorClock): void { __S.copyFrom(value, __S.getPointer(0, this)); }
     isUnknown(): boolean { return __S.getUint16(0, this) === 0; }
     setUnknown(): void { __S.setUint16(0, 0, this); }
     adoptOperation(value: capnp.Orphan<OperationMessage>): void {
         __S.setUint16(0, 1, this);
-        __S.adopt(value, __S.getPointer(0, this));
+        __S.adopt(value, __S.getPointer(1, this));
     }
     disownOperation(): capnp.Orphan<OperationMessage> { return __S.disown(this.getOperation()); }
     getOperation(): OperationMessage {
         __S.testWhich("operation", __S.getUint16(0, this), 1, this);
-        return __S.getStruct(0, OperationMessage, this);
+        return __S.getStruct(1, OperationMessage, this);
     }
-    hasOperation(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
+    hasOperation(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
     initOperation(): OperationMessage {
         __S.setUint16(0, 1, this);
-        return __S.initStructAt(0, OperationMessage, this);
+        return __S.initStructAt(1, OperationMessage, this);
     }
     isOperation(): boolean { return __S.getUint16(0, this) === 1; }
     setOperation(value: OperationMessage): void {
         __S.setUint16(0, 1, this);
-        __S.copyFrom(value, __S.getPointer(0, this));
+        __S.copyFrom(value, __S.getPointer(1, this));
     }
     adoptSync(value: capnp.Orphan<SyncMessage>): void {
         __S.setUint16(0, 2, this);
-        __S.adopt(value, __S.getPointer(0, this));
+        __S.adopt(value, __S.getPointer(1, this));
     }
     disownSync(): capnp.Orphan<SyncMessage> { return __S.disown(this.getSync()); }
     getSync(): SyncMessage {
         __S.testWhich("sync", __S.getUint16(0, this), 2, this);
-        return __S.getStruct(0, SyncMessage, this);
+        return __S.getStruct(1, SyncMessage, this);
     }
-    hasSync(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
+    hasSync(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
     initSync(): SyncMessage {
         __S.setUint16(0, 2, this);
-        return __S.initStructAt(0, SyncMessage, this);
+        return __S.initStructAt(1, SyncMessage, this);
     }
     isSync(): boolean { return __S.getUint16(0, this) === 2; }
     setSync(value: SyncMessage): void {
         __S.setUint16(0, 2, this);
-        __S.copyFrom(value, __S.getPointer(0, this));
+        __S.copyFrom(value, __S.getPointer(1, this));
     }
     toString(): string { return "Message_" + super.toString(); }
     which(): Message_Which { return __S.getUint16(0, this); }
 }
-export class OperationMessage_VectorClock_ClockMap_Entry extends __S {
-    static readonly _capnp = { displayName: "Entry", id: "83e7551f3728e4fd", size: new __O(8, 1) };
-    getSite(): string { return __S.getText(0, this); }
-    setSite(value: string): void { __S.setText(0, value, this); }
-    getClock(): number { return __S.getUint32(0, this); }
-    setClock(value: number): void { __S.setUint32(0, value, this); }
-    toString(): string { return "OperationMessage_VectorClock_ClockMap_Entry_" + super.toString(); }
-}
-export class OperationMessage_VectorClock_ClockMap extends __S {
-    static readonly Entry = OperationMessage_VectorClock_ClockMap_Entry;
-    static readonly _capnp = { displayName: "ClockMap", id: "bf9e3636f0e0afdd", size: new __O(0, 1) };
-    static _Entries: capnp.ListCtor<OperationMessage_VectorClock_ClockMap_Entry>;
-    adoptEntries(value: capnp.Orphan<capnp.List<OperationMessage_VectorClock_ClockMap_Entry>>): void { __S.adopt(value, __S.getPointer(0, this)); }
-    disownEntries(): capnp.Orphan<capnp.List<OperationMessage_VectorClock_ClockMap_Entry>> { return __S.disown(this.getEntries()); }
-    getEntries(): capnp.List<OperationMessage_VectorClock_ClockMap_Entry> { return __S.getList(0, OperationMessage_VectorClock_ClockMap._Entries, this); }
-    hasEntries(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
-    initEntries(length: number): capnp.List<OperationMessage_VectorClock_ClockMap_Entry> { return __S.initList(0, OperationMessage_VectorClock_ClockMap._Entries, length, this); }
-    setEntries(value: capnp.List<OperationMessage_VectorClock_ClockMap_Entry>): void { __S.copyFrom(value, __S.getPointer(0, this)); }
-    toString(): string { return "OperationMessage_VectorClock_ClockMap_" + super.toString(); }
-}
-export class OperationMessage_VectorClock extends __S {
-    static readonly ClockMap = OperationMessage_VectorClock_ClockMap;
-    static readonly _capnp = { displayName: "VectorClock", id: "d5be410b2d64d619", size: new __O(0, 2) };
-    getSite(): string { return __S.getText(0, this); }
-    setSite(value: string): void { __S.setText(0, value, this); }
-    adoptClockMap(value: capnp.Orphan<OperationMessage_VectorClock_ClockMap>): void { __S.adopt(value, __S.getPointer(1, this)); }
-    disownClockMap(): capnp.Orphan<OperationMessage_VectorClock_ClockMap> { return __S.disown(this.getClockMap()); }
-    getClockMap(): OperationMessage_VectorClock_ClockMap { return __S.getStruct(1, OperationMessage_VectorClock_ClockMap, this); }
-    hasClockMap(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
-    initClockMap(): OperationMessage_VectorClock_ClockMap { return __S.initStructAt(1, OperationMessage_VectorClock_ClockMap, this); }
-    setClockMap(value: OperationMessage_VectorClock_ClockMap): void { __S.copyFrom(value, __S.getPointer(1, this)); }
-    toString(): string { return "OperationMessage_VectorClock_" + super.toString(); }
-}
 export class OperationMessage extends __S {
-    static readonly VectorClock = OperationMessage_VectorClock;
-    static readonly _capnp = { displayName: "OperationMessage", id: "d5f9a8895d3bf115", size: new __O(0, 2) };
-    adoptVclock(value: capnp.Orphan<OperationMessage_VectorClock>): void { __S.adopt(value, __S.getPointer(0, this)); }
-    disownVclock(): capnp.Orphan<OperationMessage_VectorClock> { return __S.disown(this.getVclock()); }
-    getVclock(): OperationMessage_VectorClock { return __S.getStruct(0, OperationMessage_VectorClock, this); }
-    hasVclock(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
-    initVclock(): OperationMessage_VectorClock { return __S.initStructAt(0, OperationMessage_VectorClock, this); }
-    setVclock(value: OperationMessage_VectorClock): void { __S.copyFrom(value, __S.getPointer(0, this)); }
-    adoptOperation(value: capnp.Orphan<Operation>): void { __S.adopt(value, __S.getPointer(1, this)); }
+    static readonly _capnp = { displayName: "OperationMessage", id: "d5f9a8895d3bf115", size: new __O(0, 1) };
+    adoptOperation(value: capnp.Orphan<Operation>): void { __S.adopt(value, __S.getPointer(0, this)); }
     disownOperation(): capnp.Orphan<Operation> { return __S.disown(this.getOperation()); }
-    getOperation(): Operation { return __S.getStruct(1, Operation, this); }
-    hasOperation(): boolean { return !__S.isNull(__S.getPointer(1, this)); }
-    initOperation(): Operation { return __S.initStructAt(1, Operation, this); }
-    setOperation(value: Operation): void { __S.copyFrom(value, __S.getPointer(1, this)); }
+    getOperation(): Operation { return __S.getStruct(0, Operation, this); }
+    hasOperation(): boolean { return !__S.isNull(__S.getPointer(0, this)); }
+    initOperation(): Operation { return __S.initStructAt(0, Operation, this); }
+    setOperation(value: Operation): void { __S.copyFrom(value, __S.getPointer(0, this)); }
     toString(): string { return "OperationMessage_" + super.toString(); }
 }
 export class SyncMessage extends __S {
@@ -224,6 +224,6 @@ export class Operation extends __S {
     toString(): string { return "Operation_" + super.toString(); }
     which(): Operation_Which { return __S.getUint16(0, this); }
 }
-OperationMessage_VectorClock_ClockMap._Entries = capnp.CompositeList(OperationMessage_VectorClock_ClockMap_Entry);
+Message_VectorClock_ClockMap._Entries = capnp.CompositeList(Message_VectorClock_ClockMap_Entry);
 SyncMessage._Operations = capnp.CompositeList(Operation);
 Operation_Insert._HappenedBefore = capnp.CompositeList(Operation_Timestamp);
