@@ -53,7 +53,8 @@ export class Mailbox extends EventEmitter {
     const msg = capnpMsg.initRoot(Message);
 
     const opMsg = msg.initOperation();
-    opMsg.initVclock(); // TODO
+    this.vclock.increment();
+    this.serializeVClockToStruct(this.vclock, opMsg.initVclock());
     const opStruct = opMsg.getOperation();
     this.serializeOpToStruct(op, opStruct);
 
@@ -104,6 +105,24 @@ export class Mailbox extends EventEmitter {
     for (let i = 0; i < batch.length; i++) {
       const operation = operations.get(i);
       this.serializeOpToStruct(batch[i], operation);
+    }
+  }
+
+  private serializeVClockToStruct(
+    vclock: VClock,
+    vclockStruct: OperationMessage_VectorClock
+  ): void {
+    vclockStruct.setSite(vclock.site);
+
+    const clockMap = vclockStruct.initClockMap();
+    const entries = clockMap.initEntries(this.vclock.size);
+    var idx = 0;
+    for (const kv of this.vclock.entries.entries()) {
+      const [site, clock] = kv;
+      const entry = entries.get(idx);
+      entry.setSite(site);
+      entry.setClock(clock);
+      idx++;
     }
   }
 
@@ -188,7 +207,9 @@ export class Mailbox extends EventEmitter {
     const q = this.queue;
 
     while (!q.isEmpty() && this.canBeDelivered(q.peek())) {
-      this.deliverOp(q.poll());
+      const remoteOp = q.poll();
+      console.log(remoteOp);
+      this.deliverOp(remoteOp);
     }
   }
 

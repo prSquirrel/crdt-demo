@@ -109,4 +109,12 @@ export class VClock implements IVClock {
   concurrent(that: VClock): boolean {
     return !this.happenedBefore(that) && !that.happenedBefore(this);
   }
+
+  get size(): number {
+    return this.siteClock.size;
+  }
+
+  get entries(): ReadonlyMap<string, number> {
+    return this.siteClock;
+  }
 }
