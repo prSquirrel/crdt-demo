@@ -88,6 +88,8 @@ export class Mailbox extends EventEmitter {
     const capnpMsg = new capnp.Message();
     const msg = capnpMsg.initRoot(Message);
 
+    this.serializeVClockToStruct(this.vclock, msg.initVclock());
+
     const syncMsg = msg.initSync();
     this.serializeBatchToStruct(batch, batchNumber, lastBatchNumber, syncMsg);
 
@@ -176,6 +178,9 @@ export class Mailbox extends EventEmitter {
 
       case Message.SYNC:
         const syncMsg = msg.getSync();
+        if (syncMsg.getBatchNumber() === syncMsg.getLastBatchNumber()) {
+          this.vclock.merge(remoteVclock);
+        }
         console.log(`Syncing batch ${syncMsg.getBatchNumber()}/${syncMsg.getLastBatchNumber()}`);
         const operations = syncMsg.getOperations();
 
