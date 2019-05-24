@@ -83,7 +83,6 @@ export class Mailbox extends EventEmitter {
     lastBatchNumber: number
   ): void {
     console.log(`Sending batch ${batchNumber}. Last batch is ${lastBatchNumber}`);
-    console.log(batch);
 
     const capnpMsg = new capnp.Message();
     const msg = capnpMsg.initRoot(Message);
