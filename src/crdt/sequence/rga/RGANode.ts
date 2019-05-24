@@ -30,10 +30,6 @@ export abstract class RGANode<T> implements Comparable {
     this.parent = parent;
   }
 
-  get isLeaf(): boolean {
-    return this.childrenAsc.length == 0;
-  }
-
   walkPreOrder(visit: (node: RGANode<T>) => void): void {
     const queue: Deque<RGANode<T>> = new Deque();
     queue.push(this);
@@ -65,14 +61,18 @@ export abstract class RGANode<T> implements Comparable {
   addSibling(newNode: RGANode<T>): void {
     const children = this.childrenAsc;
 
-    if (this.isLeaf) {
+    if (this.childrenAsc.length === 0) {
       children.push(newNode);
     } else {
       // traverse in descending order
       for (let i = children.length; i-- > 0; ) {
         if (children[i].compareTo(newNode) < 0) {
-          //current node precedes new node -> insert after current
+          // current node precedes new node -> insert after current
           children.splice(i + 1, 0, newNode);
+          break;
+        } else {
+          // new node precedes current node -> insert before current
+          children.splice(i, 0, newNode);
           break;
         }
       }
