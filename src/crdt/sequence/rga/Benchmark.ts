@@ -66,12 +66,12 @@ export class Benchmark {
   private startProfile(name: string): void {
     if (this.profileCpu) {
       console.timeStamp(name);
-      window.profile(name);
+      (window as any).profile(name);
     }
   }
 
   private endProfile(): void {
-    if (this.profileCpu) window.profileEnd();
+    if (this.profileCpu) (window as any).profileEnd();
   }
 
   upstreamInsertAppend(size: number): void {
