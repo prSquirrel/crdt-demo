@@ -7,19 +7,22 @@ import * as capnp from 'capnp-ts';
 import { Operation } from './network/schema/schema';
 import { Timestamp } from './crdt/sequence/rga/Timestamp';
 import { client } from './network/DefaultClient';
-import { Benchmark } from './crdt/sequence/rga/Benchmark';
+import { Benchmark, MemoryBenchmark } from './crdt/sequence/rga/Benchmark';
 
 const benchmark = new Benchmark();
 console.log(benchmark);
 
-const mountNode = document.getElementById('app');
-ReactDOM.render(
-  <div>
-    <Dashboard />
-    <ReplicatedTextInput />
-    {/* <Canvas /> */}
-  </div>,
-  mountNode
-);
+const memBenchmark = new MemoryBenchmark();
+console.log(memBenchmark);
 
-client.connect();
+// const mountNode = document.getElementById('app');
+// ReactDOM.render(
+//   <div>
+//     <Dashboard />
+//     <ReplicatedTextInput />
+//     {/* <Canvas /> */}
+//   </div>,
+//   mountNode
+// );
+
+// client.connect();

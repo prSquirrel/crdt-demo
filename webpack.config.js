@@ -1,7 +1,7 @@
 const path = require('path');
 const Webpack = require('webpack');
 
-const isProd = false;
+const isProd = true;
 
 module.exports = {
   target: 'web',

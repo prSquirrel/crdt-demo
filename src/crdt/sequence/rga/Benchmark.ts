@@ -2,13 +2,28 @@ import { RGATreeSeq } from './RGATreeSeq';
 import { Chance } from 'chance';
 import { InsertOp, RemoveOp } from './op/Op';
 
+export class MemoryBenchmark {
+  private static readonly char = '+';
+  private static readonly site = 'ASDWQQOJDASNXX@asdqa';
+  private seq = new RGATreeSeq<string>(MemoryBenchmark.site);
+
+  fill(size: number): void {
+    for (let i = 0; i < size; i++) {
+      this.seq.insert(MemoryBenchmark.char, i);
+    }
+  }
+
+  reset(): void {
+    this.seq = new RGATreeSeq<string>('ASDWQQOJDASNXX@asdqa');
+  }
+}
+
 export class Benchmark {
   private chance = new Chance();
   private static readonly char = '+';
   private profileCpu = true;
 
-  runUpstreamBenchmark(profileCpu: boolean): void {
-    this.profileCpu = profileCpu;
+  runUpstreamBenchmark(): void {
     //insert
     //  append
     this.upstreamInsertAppend(100);
@@ -46,8 +61,7 @@ export class Benchmark {
     this.upstreamDeleteRandom(100000);
   }
 
-  runDownstreamBenchmark(profileCpu: boolean): void {
-    this.profileCpu = profileCpu;
+  runDownstreamBenchmark(): void {
     //insert
     //  random
     this.downstreamInsertRandom(100);
