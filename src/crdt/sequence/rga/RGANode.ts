@@ -64,19 +64,25 @@ export abstract class RGANode<T> implements Comparable {
     if (this.childrenAsc.length === 0) {
       children.push(newNode);
     } else {
-      // traverse in descending order
-      for (let i = children.length; i-- > 0; ) {
-        if (children[i].compareTo(newNode) < 0) {
-          // current node precedes new node -> insert after current
-          children.splice(i + 1, 0, newNode);
-          break;
-        } else {
-          // new node precedes current node -> insert before current
-          children.splice(i, 0, newNode);
-          break;
-        }
+      const insertAfterIndex = this.findInsertIndex(newNode);
+      children.splice(insertAfterIndex, 0, newNode);
+    }
+  }
+
+  private findInsertIndex(newNode: RGANode<T>): number {
+    const children = this.childrenAsc;
+
+    let insertAfterIndex: number;
+    // traverse in descending order
+    for (let i = children.length; i-- > 0; ) {
+      if (children[i].compareTo(newNode) < 0) {
+        // current node precedes new node -> insert after current
+        insertAfterIndex = i + 1;
+        break;
       }
     }
+
+    return insertAfterIndex | 0;
   }
 
   hide(): void {
