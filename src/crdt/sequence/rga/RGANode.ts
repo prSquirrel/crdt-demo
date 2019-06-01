@@ -30,13 +30,21 @@ export abstract class RGANode<T> implements Comparable {
     this.parent = parent;
   }
 
-  walkPreOrder(visit: (node: RGANode<T>) => void): void {
+  findCommonVisibleParent(): RGANode<T> {
+    if (this.isParent) return this;
+    if (!this.hidden) return this;
+    return this.parent.findCommonVisibleParent();
+  }
+
+  walkPreOrder(visit: (node: RGANode<T>) => boolean): void {
     const queue: Deque<RGANode<T>> = new Deque();
     queue.push(this);
 
     while (!queue.isEmpty()) {
       const node = queue.pop();
-      if (!node.isParent) visit(node);
+      if (!node.isParent) {
+        if (!visit(node)) break;
+      }
       // since children are sorted by ascending timestamp
       // it will conveniently reverse them, resulting in correct order
       node.childrenAsc.forEach(sibling => {
@@ -90,6 +98,10 @@ export abstract class RGANode<T> implements Comparable {
     // FIXME: freeing up hidden element would be possible once
     // "dummy" insert operations (without value) / immediately-deleted operations are supported
     //  this.element = undefined;
+  }
+
+  toString(): string {
+    return this.element ? this.element.toString() : ''; //timestamp.toIdString();
   }
 }
 
