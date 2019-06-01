@@ -21,8 +21,7 @@ declare namespace index {
     shift(): T;
     insertAfter(loc: Loc<T>, value: T): Loc<T>;
     insertBefore(loc: Loc<T>, value: T): Loc<T>;
-    slice(): T[];
-    slice(from: number, until: number): T[];
+    slice(from?: number, until?: number): T[];
 
     toString(): string;
   }

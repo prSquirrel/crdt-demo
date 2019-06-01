@@ -58,7 +58,7 @@ export class RGATreeSeq<T> implements RGASeq<T> {
   }
 
   toArray(): T[] {
-    return this.identifiers.slice().map(node => node.element);
+    return this.identifiers.slice(1).map(node => node.element);
   }
 
   //TODO: this could use special tombstone operation. Tombstone = Insert+Remove
