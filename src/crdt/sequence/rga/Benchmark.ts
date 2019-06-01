@@ -64,6 +64,7 @@ export class Benchmark {
   }
 
   private startProfile(name: string): void {
+    console.log(`Starting profiling ${name}`);
     if (this.profileCpu) {
       console.timeStamp(name);
       (window as any).profile(name);
