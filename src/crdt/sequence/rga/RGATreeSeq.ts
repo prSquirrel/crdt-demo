@@ -3,28 +3,36 @@ import { RGAParentNode, RGABranchNode, RGANode } from './RGANode';
 import { Timestamp } from './Timestamp';
 import { ValueSet } from '../../../util/ValueSet';
 import { RGASeq } from './RGASeq';
+import { SplayList, Loc } from './splaylist';
 
 export class RGATreeSeq<T> implements RGASeq<T> {
   private readonly site: string;
   private clock: number;
 
   private readonly root: RGAParentNode<T>;
-  // since timestamps are uniquely ordered, Timestamp -> Node lookups can be cached
-  private readonly cache: Map<string, RGANode<T>>;
+  private readonly identifiers: SplayList<RGANode<T>>;
+  // since timestamps are unique, Timestamp -> Node lookups can be cached
+  private readonly cache: Map<string, Loc<RGANode<T>>>;
 
   constructor(site: string) {
     this.site = site;
     this.clock = 0;
 
-    this.root = new RGAParentNode();
+    const root = new RGAParentNode<T>();
+    this.root = root;
+
+    const identifiers = new SplayList<RGANode<T>>();
+    identifiers.push(root);
+    this.identifiers = identifiers;
+
     this.cache = new Map();
-    this.cache.set(this.root.timestamp.toIdString(), this.root);
+    this.cache.set(root.timestamp.toIdString(), identifiers.first());
   }
 
   insert(value: T, position: number): InsertOp<T> {
     //TODO: bounds check
 
-    const referenceNode: RGANode<T> = position == 0 ? this.root : this.get(position - 1);
+    const referenceNode: RGANode<T> = this.get(position);
     const newTimestamp = new Timestamp(this.site, ++this.clock);
 
     // all observed siblings of reference node at the moment of insertion
@@ -36,32 +44,21 @@ export class RGATreeSeq<T> implements RGASeq<T> {
 
   remove(position: number): RemoveOp<T> {
     //TODO: bounds check
-    const nodeToRemove = this.get(position);
+
+    // + 1 since there always exists a root node, and we do not want to remove that
+    const nodeToRemove = this.get(position + 1);
 
     const op = new RemoveOp(nodeToRemove.timestamp);
     this.applyRemove(op);
     return op;
   }
 
-  // TODO: this is O(N) now, use weight-balanced tree later
-  // returns undefined if tree is empty
   private get(position: number): RGANode<T> {
-    const preOrderArray = this.toPreOrderArray();
-    return preOrderArray[position];
-  }
-
-  toPreOrderArray(): RGANode<T>[] {
-    const elements: RGANode<T>[] = [];
-    if (this.root) {
-      this.root.walkPreOrder(node => {
-        if (!node.hidden) elements.push(node);
-      });
-    }
-    return elements;
+    return this.identifiers.get(position);
   }
 
   toArray(): T[] {
-    return this.toPreOrderArray().map(node => node.element);
+    return this.identifiers.slice(1).map(node => node.element);
   }
 
   //TODO: this could use special tombstone operation. Tombstone = Insert+Remove
@@ -103,7 +100,8 @@ export class RGATreeSeq<T> implements RGASeq<T> {
   }
 
   private applyInsert(insert: InsertOp<T>): void {
-    const referenceNode = this.cache.get(insert.referenceTimestamp.toIdString());
+    const referenceNodeLoc = this.cache.get(insert.referenceTimestamp.toIdString());
+    const referenceNode = referenceNodeLoc.val();
     const newNode = new RGABranchNode<T>(
       insert.value,
       insert.timestamp,
@@ -111,16 +109,45 @@ export class RGATreeSeq<T> implements RGASeq<T> {
       referenceNode
     );
     referenceNode.addSibling(newNode);
-    this.cache.set(newNode.timestamp.toIdString(), newNode);
+    const newNodeLoc = this.insertIdentifier(referenceNode, newNode);
+    this.cache.set(newNode.timestamp.toIdString(), newNodeLoc);
+  }
+
+  private insertIdentifier(reference: RGANode<T>, newNode: RGANode<T>): Loc<RGANode<T>> {
+    const commonParent = reference.findCommonVisibleParent();
+
+    let anchor: RGANode<T>;
+    commonParent.walkPreOrder(node => {
+      if (!node.hidden && node != newNode) {
+        anchor = node;
+      }
+      return node != newNode;
+    });
+
+    if (anchor) {
+      const anchorLoc = this.cache.get(anchor.timestamp.toIdString());
+      return this.identifiers.insertAfter(anchorLoc, newNode);
+    } else {
+      return this.identifiers.insertAfter(this.identifiers.first(), newNode);
+    }
   }
 
   private applyRemove(remove: RemoveOp<T>): void {
     const idStr = remove.timestampToRemove.toIdString();
-    const nodeToRemove = this.cache.get(idStr);
+    const nodeToRemoveLoc = this.cache.get(idStr);
+    this.removeIdentifier(nodeToRemoveLoc);
+    const nodeToRemove = nodeToRemoveLoc.val();
     nodeToRemove.hide();
     // TODO: Is it worth deleting hidden nodes from cache, and performing expensive search
     //       in an event somebody inserts a character
     //       after the node was removed from cache?
     // this.cache.delete(idStr);
+  }
+
+  private removeIdentifier(reference: Loc<RGANode<T>>): void {
+    if (!reference.val().hidden) {
+      // if it is not hidden, it must exist in identifier structure
+      this.identifiers.removeAt(reference);
+    }
   }
 }

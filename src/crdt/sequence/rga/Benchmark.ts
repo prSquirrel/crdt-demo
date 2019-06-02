@@ -35,6 +35,7 @@ export class Benchmark {
     this.upstreamInsertAppend(1000);
     this.upstreamInsertAppend(10000);
     this.upstreamInsertAppend(100000);
+    this.upstreamInsertAppend(1000000);
     //  prepend
     this.upstreamInsertPrepend(100);
     this.upstreamInsertPrepend(1000);
@@ -47,6 +48,7 @@ export class Benchmark {
     this.upstreamInsertRandom(1000);
     this.upstreamInsertRandom(10000);
     this.upstreamInsertRandom(100000);
+    this.upstreamInsertRandom(1000000);
 
     //delete
     // first
@@ -54,16 +56,19 @@ export class Benchmark {
     this.upstreamDeleteFirst(1000);
     this.upstreamDeleteFirst(10000);
     this.upstreamDeleteFirst(100000);
+    this.upstreamDeleteFirst(1000000);
     // last
     this.upstreamDeleteLast(100);
     this.upstreamDeleteLast(1000);
     this.upstreamDeleteLast(10000);
     this.upstreamDeleteLast(100000);
+    this.upstreamDeleteLast(1000000);
     // random
     this.upstreamDeleteRandom(100);
     this.upstreamDeleteRandom(1000);
     this.upstreamDeleteRandom(10000);
     this.upstreamDeleteRandom(100000);
+    this.upstreamDeleteRandom(1000000);
   }
 
   runDownstreamBenchmark(): void {
@@ -73,6 +78,7 @@ export class Benchmark {
     this.downstreamInsertRandom(1000);
     this.downstreamInsertRandom(10000);
     this.downstreamInsertRandom(100000);
+    this.downstreamInsertRandom(1000000);
 
     //delete
     // random
@@ -80,6 +86,7 @@ export class Benchmark {
     this.downstreamDeleteRandom(1000);
     this.downstreamDeleteRandom(10000);
     this.downstreamDeleteRandom(100000);
+    this.downstreamDeleteRandom(1000000);
   }
 
   private startProfile(name: string): void {
