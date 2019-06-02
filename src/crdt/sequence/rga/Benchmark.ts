@@ -7,6 +7,11 @@ export class MemoryBenchmark {
   private static readonly site = 'ASDWQQOJDASNXX@asdqa';
   private seq = new RGATreeSeq<string>(MemoryBenchmark.site);
 
+  resetAndFill(size: number): void {
+    this.reset();
+    this.fill(size);
+  }
+
   fill(size: number): void {
     for (let i = 0; i < size; i++) {
       this.seq.insert(MemoryBenchmark.char, i);
