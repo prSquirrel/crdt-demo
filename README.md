@@ -12,9 +12,11 @@ An excellent Splay tree implementation from https://github.com/davidbau/splaylis
 # Requirements
 * Node 10.15
 
-# Running
+# Building
 * Checkout the repo
 * `npm install`
 * `npm run build` to build peer app
+
+# Running
 * `node server.js`to run signaling & static file server
 * Open `localhost:8443` in browser
