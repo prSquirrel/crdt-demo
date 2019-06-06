@@ -1,3 +1,8 @@
+# Demo
+(currently no STUN/TURN servers are configured, so it only works with local peers)
+https://enigmatic-beach-42935.herokuapp.com/
+
+# About
 A collaborative text editor demo based on Causal Tree CRDT (variant of RGA). 
 
 Uses WebSockets for signaling and WebRTC Data Channels for p2p communication. 
