@@ -1,5 +1,4 @@
 const https = require('https');
-const fs = require('fs');
 const express = require('express');
 const io = require('socket.io');
 
@@ -8,14 +7,7 @@ const io = require('socket.io');
 const httpApp = express();
 httpApp.use(express.static(`${__dirname}/static/`));
 
-const certsDir = `${__dirname}/certs`;
-const webServer = https.createServer(
-  {
-    key: fs.readFileSync(`${certsDir}/localhost.key`),
-    cert: fs.readFileSync(`${certsDir}/localhost.crt`)
-  },
-  httpApp
-);
+const webServer = https.createServer(httpApp);
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
 const signalServer = require('simple-signal-server')(socketServer);
@@ -37,6 +29,7 @@ signalServer.on('request', request => {
   request.forward(); // forward all requests to connect
 });
 
-webServer.listen(8443, () => {
+const port = process.env.PORT | 8443;
+webServer.listen(port, () => {
   console.log(`Listening on https://localhost:${webServer.address().port}`);
 });
