@@ -1,6 +1,7 @@
 # Demo
-(currently no STUN/TURN servers are configured, so it only works with local peers)
 https://enigmatic-beach-42935.herokuapp.com/
+
+(currently no STUN/TURN servers are configured, so it only works with local peers)
 
 # About
 A collaborative text editor demo based on Causal Tree CRDT (variant of RGA). 
