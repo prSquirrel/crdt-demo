@@ -1,4 +1,4 @@
-const https = require('https');
+const http = require('http');
 const express = require('express');
 const io = require('socket.io');
 
@@ -7,7 +7,7 @@ const io = require('socket.io');
 const httpApp = express();
 httpApp.use(express.static(`${__dirname}/static/`));
 
-const webServer = https.createServer(httpApp);
+const webServer = http.createServer(httpApp);
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
 const signalServer = require('simple-signal-server')(socketServer);
