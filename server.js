@@ -1,13 +1,15 @@
-const http = require('http');
 const express = require('express');
 const io = require('socket.io');
-
+const path = require('path');
 // process.title = 'node-easyrtc';
 
 const httpApp = express();
-httpApp.use(express.static(`${__dirname}/static/`));
+httpApp.use(express.static(path.join(__dirname, 'static')));
 
-const webServer = http.createServer(httpApp);
+const port = process.env.PORT || 8443;
+const webServer = httpApp.listen(port, () => {
+  console.log(`Listening on port ${webServer.address().port}`);
+});
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
 const signalServer = require('simple-signal-server')(socketServer);
@@ -27,9 +29,4 @@ signalServer.on('disconnect', socket => {
 
 signalServer.on('request', request => {
   request.forward(); // forward all requests to connect
-});
-
-const port = process.env.PORT | 8443;
-webServer.listen(port, () => {
-  console.log(`Listening on https://localhost:${webServer.address().port}`);
 });
