@@ -12,7 +12,8 @@ class DefaultClient extends EventEmitter implements Client {
   constructor() {
     super();
 
-    this.socket = io.connect(`https://${document.domain}`, {
+    const socketUri = PRODUCTION ? `https://${document.domain}` : `https://${document.domain}:8443`;
+    this.socket = io.connect(socketUri, {
       timeout: 10000,
       forceNew: true
     });

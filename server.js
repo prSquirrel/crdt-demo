@@ -1,14 +1,26 @@
+const https = require('https');
+const fs = require('fs');
 const express = require('express');
 const io = require('socket.io');
 const path = require('path');
-// process.title = 'node-easyrtc';
 
-const httpApp = express();
-httpApp.use(express.static(path.join(__dirname, 'static')));
+const isProd = process.env.NODE_ENV == 'production';
+
+const expressApp = express().use(express.static(path.join(__dirname, 'static')));
+const localCertsDir = path.join(__dirname, 'certs');
+const httpApp = isProd
+  ? expressApp
+  : https.createServer(
+      {
+        key: fs.readFileSync(`${localCertsDir}/localhost.key`),
+        cert: fs.readFileSync(`${localCertsDir}/localhost.crt`)
+      },
+      expressApp
+    );
 
 const port = process.env.PORT || 8443;
 const webServer = httpApp.listen(port, () => {
-  console.log(`Listening on port ${webServer.address().port}`);
+  console.log(`[prod=${isProd}] Listening on port ${webServer.address().port}`);
 });
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
