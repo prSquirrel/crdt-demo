@@ -6,14 +6,15 @@ const path = require('path');
 
 const isProd = process.env.NODE_ENV == 'production';
 
-const expressApp = express().use(express.static(path.join(__dirname, 'static')));
-const localCertsDir = path.join(__dirname, 'certs');
+const staticsPath = path.join(__dirname, 'static');
+const expressApp = express().use(express.static(staticsPath));
+const localCertsPath = path.join(__dirname, 'certs');
 const httpApp = isProd
   ? expressApp
   : https.createServer(
       {
-        key: fs.readFileSync(`${localCertsDir}/localhost.key`),
-        cert: fs.readFileSync(`${localCertsDir}/localhost.crt`)
+        key: fs.readFileSync(`${localCertsPath}/localhost.key`),
+        cert: fs.readFileSync(`${localCertsPath}/localhost.crt`)
       },
       expressApp
     );
