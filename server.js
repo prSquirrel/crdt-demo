@@ -2,20 +2,27 @@ const https = require('https');
 const fs = require('fs');
 const express = require('express');
 const io = require('socket.io');
+const path = require('path');
 
-// process.title = 'node-easyrtc';
+const isProd = process.env.NODE_ENV == 'production';
 
-const httpApp = express();
-httpApp.use(express.static(`${__dirname}/static/`));
+const staticsPath = path.join(__dirname, 'static');
+const expressApp = express().use(express.static(staticsPath));
+const localCertsPath = path.join(__dirname, 'certs');
+const httpApp = isProd
+  ? expressApp
+  : https.createServer(
+      {
+        key: fs.readFileSync(`${localCertsPath}/localhost.key`),
+        cert: fs.readFileSync(`${localCertsPath}/localhost.crt`)
+      },
+      expressApp
+    );
 
-const certsDir = `${__dirname}/certs`;
-const webServer = https.createServer(
-  {
-    key: fs.readFileSync(`${certsDir}/localhost.key`),
-    cert: fs.readFileSync(`${certsDir}/localhost.crt`)
-  },
-  httpApp
-);
+const port = process.env.PORT || 8443;
+const webServer = httpApp.listen(port, () => {
+  console.log(`[prod=${isProd}] Listening on port ${webServer.address().port}`);
+});
 
 const socketServer = io.listen(webServer, { 'log level': 1 });
 const signalServer = require('simple-signal-server')(socketServer);
@@ -35,8 +42,4 @@ signalServer.on('disconnect', socket => {
 
 signalServer.on('request', request => {
   request.forward(); // forward all requests to connect
-});
-
-webServer.listen(8443, () => {
-  console.log(`Listening on https://localhost:${webServer.address().port}`);
 });

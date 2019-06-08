@@ -1,7 +1,7 @@
 const path = require('path');
 const Webpack = require('webpack');
 
-const isProd = false;
+const isProd = process.env.NODE_ENV == 'production';
 
 module.exports = {
   target: 'web',
@@ -49,5 +49,10 @@ module.exports = {
     react: 'React',
     'react-dom': 'ReactDOM'
   },
-  plugins: [new Webpack.IgnorePlugin(/uws/)]
+  plugins: [
+    new Webpack.IgnorePlugin(/uws/),
+    new Webpack.DefinePlugin({
+      PRODUCTION: isProd
+    })
+  ]
 };
