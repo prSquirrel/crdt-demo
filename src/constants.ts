@@ -1,3 +1,5 @@
 declare const PRODUCTION: boolean;
 
-export { PRODUCTION };
+const _PRODUCTION = PRODUCTION;
+
+export { _PRODUCTION as PRODUCTION };
