@@ -52,7 +52,7 @@ module.exports = {
   plugins: [
     new Webpack.IgnorePlugin(/uws/),
     new Webpack.DefinePlugin({
-      PRODUCTION: JSON.stringify(isProd)
+      PRODUCTION: isProd
     })
   ]
 };
