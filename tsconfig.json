@@ -11,8 +11,8 @@
     "module": "commonjs",
     "target": "es6",
     "jsx": "react",
-    "typeRoots": ["./src/typings"]
+    "typeRoots": ["src/typings"]
   },
-  "include": ["./src/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
