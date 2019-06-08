@@ -4,6 +4,7 @@ import SimpleSignalClient from 'simple-signal-client';
 import EventEmitter from 'nanobus';
 import { Buffer } from 'buffer/';
 import { Client, ClientEvents, PeerSyncContext } from './Client';
+import { PRODUCTION } from '../constants';
 
 class DefaultClient extends EventEmitter implements Client {
   private socket: SocketIOClient.Socket;
