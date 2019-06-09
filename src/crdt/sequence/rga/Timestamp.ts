@@ -21,4 +21,8 @@ export class Timestamp implements Identifiable, Comparable {
     if (this.site > that.site) return 1;
     return 0;
   }
+
+  equals(that: Timestamp): boolean {
+    return this.compareTo(that) === 0;
+  }
 }

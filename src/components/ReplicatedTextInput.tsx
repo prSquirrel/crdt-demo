@@ -6,20 +6,43 @@ import { diff, TextOp } from '../util/Diff';
 import { ClientEvents, PeerSyncContext } from '../network/Client';
 import { client } from '../network/DefaultClient';
 import { Mailbox, MailboxEvents } from '../network/Mailbox';
-import { Op } from '../crdt/sequence/rga/op/Op';
+import { Op, OpKind, RemoveOp, InsertOp } from '../crdt/sequence/rga/op/Op';
+import { RGAParentNode } from '../crdt/sequence/rga/RGANode';
+import { Timestamp } from '../crdt/sequence/rga/Timestamp';
 
 interface Props {}
+
+interface ISelection {
+  start: number;
+  end: number;
+  startAnchor: Timestamp;
+  endAnchor: Timestamp;
+}
+
+interface ITextAreaStore {
+  content: string;
+  selection: ISelection;
+  selectionBuffer: ISelection;
+}
 
 class ReplicatedTextInput extends React.Component<Props, {}> {
   private textAreaRef: React.RefObject<HTMLTextAreaElement>;
   private textSeq?: RGASeq<string>;
   private mailbox?: Mailbox;
 
-  private textAreaStore = store({
+  private textAreaStore: ITextAreaStore = store({
     content: '',
     selection: {
       start: 0,
-      end: 0
+      end: 0,
+      startAnchor: RGAParentNode.timestamp,
+      endAnchor: RGAParentNode.timestamp
+    },
+    selectionBuffer: {
+      start: 0,
+      end: 0,
+      startAnchor: RGAParentNode.timestamp,
+      endAnchor: RGAParentNode.timestamp
     }
   });
 
@@ -32,20 +55,12 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
     client.on(ClientEvents.ID_ASSIGNED, id => {
       this.textSeq = new RGATreeSeq<string>(id);
       this.mailbox = new Mailbox(id, client);
-      this.mailbox.on(MailboxEvents.OP_RECEIVED, (op: Op<string>) => {
-        console.log(op);
-        this.applyRemoteOp(op);
-        this.updateContent();
-      });
+      this.mailbox.on(MailboxEvents.OP_RECEIVED, (op: Op<string>) => this.handleRemoteOp(op));
       this.mailbox.on(MailboxEvents.SYNC_RECEIVED, (ops: Op<string>[]) => {
         console.log(`SYNC_RECEIVED`);
         ops.forEach(op => this.applyRemoteOp(op));
         this.updateContent();
       });
-
-      // console.log(`Inserting 1000 characters @ ${new Date()}`);
-      // Array.from({ length: 1000 }, (_, i) => textStore.seq.insert('X', i));
-      // console.log(`Finished @ ${new Date()}`);
     });
 
     client.on(ClientEvents.SYNC_REQUESTED, (ctx: PeerSyncContext) => {
@@ -56,6 +71,60 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
   }
 
   componentWillUnmount() {}
+
+  private handleRemoteOp(op: Op<string>): void {
+    this.applyRemoteOp(op);
+    this.bufferSelection(op);
+    this.updateContent();
+    this.swapSelectionBuffers();
+    this.updateSelection();
+  }
+
+  private bufferSelection(op: Op<string>): void {
+    const selectionBuffer = this.textAreaStore.selection;
+
+    switch (op.kind) {
+      case OpKind.Insert: {
+        const opTimestamp = (op as InsertOp<string>).referenceTimestamp;
+        if (selectionBuffer.startAnchor.equals(opTimestamp)) {
+          const newStart = selectionBuffer.start + 1;
+          selectionBuffer.startAnchor = this.textSeq.get(newStart).timestamp;
+        }
+        break;
+      }
+
+      case OpKind.Remove: {
+        const opTimestamp = (op as RemoveOp<string>).timestampToRemove;
+        if (selectionBuffer.startAnchor.equals(opTimestamp)) {
+          const newStart = selectionBuffer.start > 0 ? selectionBuffer.start - 1 : 0;
+          selectionBuffer.startAnchor = this.textSeq.get(newStart).timestamp;
+        }
+        if (selectionBuffer.endAnchor.equals(opTimestamp)) {
+          const newEnd = selectionBuffer.end > 0 ? selectionBuffer.end - 1 : 0;
+          selectionBuffer.endAnchor = this.textSeq.get(newEnd).timestamp;
+        }
+        break;
+      }
+    }
+    selectionBuffer.start = this.textSeq.getIndex(selectionBuffer.startAnchor);
+    selectionBuffer.end = this.textSeq.getIndex(selectionBuffer.endAnchor);
+
+    this.textAreaStore.selectionBuffer = selectionBuffer;
+  }
+
+  private swapSelectionBuffers(): void {
+    const temp = this.textAreaStore.selection;
+    this.textAreaStore.selection = this.textAreaStore.selectionBuffer;
+    this.textAreaStore.selectionBuffer = temp;
+  }
+
+  private updateSelection(): void {
+    const buffer = this.textAreaStore.selection;
+    const ref = this.textAreaRef.current;
+
+    ref.selectionStart = buffer.start;
+    ref.selectionEnd = buffer.end;
+  }
 
   private onChange = (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
     const eventTarget = ev.target;
@@ -68,10 +137,8 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
       this.textAreaStore.selection.end
     );
 
-    // console.log(JSON.stringify(ops));
     const opsToReplicate = this.applyTextOps(ops);
     this.updateContent();
-    // console.log(JSON.stringify(opsToReplicate));
     opsToReplicate.forEach(op => {
       this.mailbox.broadcast(op);
     });
@@ -101,8 +168,12 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
   private onSelect = (ev: any) => {
     const start = ev.target.selectionStart;
     const end = ev.target.selectionEnd;
-    this.textAreaStore.selection.start = start;
-    this.textAreaStore.selection.end = end;
+    this.textAreaStore.selection = {
+      start: start,
+      end: end,
+      startAnchor: this.textSeq ? this.textSeq.get(start).timestamp : RGAParentNode.timestamp,
+      endAnchor: this.textSeq ? this.textSeq.get(end).timestamp : RGAParentNode.timestamp
+    };
   };
 
   render() {

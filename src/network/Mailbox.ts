@@ -209,7 +209,6 @@ export class Mailbox extends EventEmitter {
 
     while (!q.isEmpty() && this.canBeDelivered(q.peek())) {
       const remoteOp = q.poll();
-      console.log(remoteOp);
       this.deliverOp(remoteOp);
     }
   }

@@ -53,8 +53,14 @@ export class RGATreeSeq<T> implements RGASeq<T> {
     return op;
   }
 
-  private get(position: number): RGANode<T> {
+  // TODO: fix .get(0) returning root node (it should not leak from here)
+  get(position: number): RGANode<T> {
     return this.identifiers.get(position);
+  }
+
+  getIndex(timestamp: Timestamp): number {
+    const node = this.cache.get(timestamp.toIdString());
+    return this.identifiers.index(node);
   }
 
   toArray(): T[] {

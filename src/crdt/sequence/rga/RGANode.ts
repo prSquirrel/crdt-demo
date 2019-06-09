@@ -9,7 +9,7 @@ export abstract class RGANode<T> implements Comparable {
   readonly timestamp: Timestamp;
   readonly happenedBefore: ValueSet<Timestamp>;
   readonly parent?: RGANode<T>;
-  element?: T;
+  readonly element?: T;
 
   abstract readonly childrenAsc: RGANode<T>[];
   abstract compareTo(that: RGANode<T>): -1 | 0 | 1;
@@ -160,10 +160,12 @@ export class RGABranchNode<T> extends RGANode<T> {
 }
 
 export class RGAParentNode<T> extends RGANode<T> {
+  static readonly timestamp: Timestamp = new Timestamp('', 0);
+
   readonly childrenAsc: RGABranchNode<T>[];
 
   constructor() {
-    super(true, true, new Timestamp('', 0), new ValueSet());
+    super(true, true, RGAParentNode.timestamp, new ValueSet());
     this.childrenAsc = [];
   }
 
