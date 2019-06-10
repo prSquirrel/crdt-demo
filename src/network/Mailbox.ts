@@ -33,6 +33,8 @@ export class Mailbox extends EventEmitter {
   private readonly site: string;
   private vclock: VClock;
   private queue: FastPriorityQueue<RemoteOp>;
+  private isOnline: boolean;
+  private readonly outgoingBuffer: Array<capnp.Message>;
 
   constructor(site: string, client: Client) {
     super();
@@ -46,6 +48,26 @@ export class Mailbox extends EventEmitter {
       const compare = a.vclock.compareTo(b.vclock);
       return compare === Compare.LT;
     });
+    this.isOnline = true;
+    this.outgoingBuffer = [];
+  }
+
+  get online(): boolean {
+    return this.isOnline;
+  }
+
+  set online(online: boolean) {
+    const wasOffline = !this.isOnline;
+    this.isOnline = online;
+    if (wasOffline && online) {
+      this.flushBuffers();
+    }
+  }
+
+  private flushBuffers(): void {
+    this.outgoingBuffer.forEach(msg => this.client.broadcastToConnectedPeers(msg));
+    this.outgoingBuffer.length = 0;
+    this.deliverReadyOps();
   }
 
   broadcast(op: Op<string>): void {
@@ -59,7 +81,11 @@ export class Mailbox extends EventEmitter {
     const opStruct = opMsg.getOperation();
     this.serializeOpToStruct(op, opStruct);
 
-    this.client.broadcastToConnectedPeers(capnpMsg);
+    if (this.isOnline) {
+      this.client.broadcastToConnectedPeers(capnpMsg);
+    } else {
+      this.outgoingBuffer.push(capnpMsg);
+    }
   }
 
   sync(context: PeerSyncContext, history: Op<string>[]): void {
@@ -207,7 +233,7 @@ export class Mailbox extends EventEmitter {
   private deliverReadyOps(): void {
     const q = this.queue;
 
-    while (!q.isEmpty() && this.canBeDelivered(q.peek())) {
+    while (this.isOnline && !q.isEmpty() && this.canBeDelivered(q.peek())) {
       const remoteOp = q.poll();
       this.deliverOp(remoteOp);
     }

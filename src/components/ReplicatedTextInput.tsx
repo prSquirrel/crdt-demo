@@ -9,6 +9,8 @@ import { Mailbox, MailboxEvents } from '../network/Mailbox';
 import { Op, OpKind, RemoveOp, InsertOp } from '../crdt/sequence/rga/op/Op';
 import { RGAParentNode } from '../crdt/sequence/rga/RGANode';
 import { Timestamp } from '../crdt/sequence/rga/Timestamp';
+import Toggle from 'react-toggle';
+import toggleStyles from './Toggle.css';
 
 interface Props {}
 
@@ -165,6 +167,11 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
     }
   }
 
+  private onToggleChange = (ev: any) => {
+    const checked: boolean = ev.target.checked;
+    this.mailbox.online = checked;
+  };
+
   private onSelect = (ev: any) => {
     const start = ev.target.selectionStart;
     const end = ev.target.selectionEnd;
@@ -178,15 +185,28 @@ class ReplicatedTextInput extends React.Component<Props, {}> {
 
   render() {
     return (
-      <textarea
-        ref={this.textAreaRef}
-        value={this.textAreaStore.content}
-        onSelect={this.onSelect}
-        onChange={this.onChange}
-        spellCheck={false}
-        rows={40}
-        cols={150}
-      />
+      <div>
+        <div>
+          <label>
+            <Toggle
+              className={toggleStyles['react-toggle']}
+              defaultChecked={true}
+              onChange={this.onToggleChange}
+            />
+          </label>
+        </div>
+        <div>
+          <textarea
+            ref={this.textAreaRef}
+            value={this.textAreaStore.content}
+            onSelect={this.onSelect}
+            onChange={this.onChange}
+            spellCheck={false}
+            rows={40}
+            cols={150}
+          />
+        </div>
+      </div>
     );
   }
 }
