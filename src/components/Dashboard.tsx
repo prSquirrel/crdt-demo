@@ -6,10 +6,7 @@ import toggleStyles from './Toggle.css';
 
 export const dashboardStore = store({
   clientId: '...',
-  online: true,
-  get toggleText() {
-    return dashboardStore.online ? 'Online' : 'Offline';
-  }
+  online: true
 });
 
 class Dashboard extends Component {
