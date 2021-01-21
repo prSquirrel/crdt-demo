@@ -38,7 +38,7 @@
     "simple-peer": "^9.2.1",
     "simple-signal-client": "^2.0.2",
     "simple-signal-server": "^2.0.1",
-    "socket.io": "^2.2.0",
+    "socket.io": "^2.4.0",
     "socket.io-client": "^2.2.0"
   },
   "devDependencies": {
